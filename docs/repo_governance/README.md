@@ -23,3 +23,9 @@ Keep this index and the ongoing governance guides after project launch. Follow t
 ## Editorial voice
 
 When documenting my decisions or responsibilities, use first person ("I", "me", "my") rather than referring to me as "the maintainer" or "the owner". Keep instructions to contributors and template users addressed to the reader. Preserve exact technical identifiers and clearly distinguish explanatory prose from verbatim configuration values.
+
+## Repository scope
+
+Write documentation as a self-contained description of this repository. Do not mention other repositories, copied-from history, unrelated projects, or conversation context in operational guidance. Describe the current files, configuration, and behavior directly. Ensure these instructions remain meaningful when copied into a new repository.
+
+Keep links to external documentation only when needed to use a dependency or platform. Keep third-party licensing notices in dedicated license files, separate from operational guidance.

@@ -2,7 +2,7 @@
 
 ![Labels](https://img.shields.io/badge/labels-20-1D76DB) ![Policy](https://img.shields.io/badge/policy-template-6F42C1)
 
-The catalogue matches K-SFTs: 20 names, descriptions, and colours. `.github/labels.json` is authoritative; edit it through a pull request. `prune: true` removes labels outside the selected catalogue, including their issue associations.
+This repository defines 20 issue labels, each with a name, description, and colour. `.github/labels.json` is authoritative; edit it through a pull request. `prune: true` removes labels outside the selected catalogue, including their issue associations.
 
 ## ⚙️ Automation
 
@@ -19,14 +19,14 @@ Only synchronization has `issues: write`. PR validation is read-only. Actions ar
 1. Enable Actions and run **Sync issue labels** from the default branch. GitHub template creation copies files; run synchronization to establish the live labels.
 2. Keep template mode for the core catalogue, or set `.github/label-policy.json` to generated mode with profile `application`, `library`, or `ui-component`. Current overlays are empty, so each currently yields the same 20 labels.
 3. My GitHub account, `danielep71`, is the default assignee in `tools/check_issues.py` (`OWNER`), the three issue forms (`assignees`), and corresponding test fixtures. If someone else maintains a generated repository, replace my account in all three places.
-4. Create project milestones, give each open issue exactly one priority and a milestone, and assign it to me (or the account configured for a generated repository). Use `blocked` only for a named open prerequisite or `External condition:`. P1 retains K-SFTs' calculation-bug meaning.
+4. Create project milestones, give each open issue exactly one priority and a milestone, and assign it to me (or the account configured for a generated repository). Use `blocked` only for a named open prerequisite or `External condition:`. P1 is reserved for confirmed calculation bugs.
 5. If the default branch is renamed, update the main branch filters in the sync and drift workflows.
 
 **Keep** the label manifests, scripts, all three workflows, issue forms, triage checker/tests, and this guide after bootstrap. They provide ongoing maintenance and must not be deleted with one-time repository setup files.
 
 ## 🎨 Catalogue
 
-The table below explains label meanings in my voice. Exact GitHub descriptions remain in `.github/labels.json`, preserving the K-SFTs catalogue used by synchronization.
+The table below explains label meanings in my voice. Exact GitHub descriptions are defined in `.github/labels.json`, which synchronization uses as its source of truth.
 
 | Label | Colour | Meaning |
 | --- | --- | --- |
@@ -50,7 +50,3 @@ The table below explains label meanings in my voice. Exact GitHub descriptions r
 | `security` | `#8B0000` | Security boundary, vulnerability handling, supply chain, or hardening |
 | `tests` | `#006B75` | Regression coverage, test harnesses, fixtures, or manual validation |
 | `wontfix` | `#6E7781` | I have decided not to implement or continue this work |
-
-## Provenance
-
-Label manifests, synchronization/drift scripts and workflows, and the issue triage checker/tests are imported or adapted from [danielep71/K-SFTs](https://github.com/danielep71/K-SFTs). Those imported/adapted files remain covered by the [Mozilla Public License 2.0](../licenses/MPL-2.0.txt). Template adaptation changes policy mode, documentation references, and validation integration; issue forms are generic to this template. This notice does not apply that license to unrelated project files.
