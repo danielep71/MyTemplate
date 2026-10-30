@@ -26,9 +26,9 @@ Only synchronization has `issues: write`. PR validation is read-only. Actions ar
 
 ## 🎨 Catalogue
 
-The table below summarizes label meanings. Exact GitHub descriptions are defined in `.github/labels.json`, which synchronization uses as its source of truth.
+The table below lists the descriptions defined in `.github/labels.json`, which synchronization uses as its source of truth.
 
-| Label | Colour | Meaning |
+| Label | Colour | Description |
 | --- | --- | --- |
 | `behavior-change` | `#C24E00` | Intentional externally observable behavior change |
 | `blocked` | `#B60205` | Cannot proceed until a named dependency is complete |
