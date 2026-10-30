@@ -1,0 +1,37 @@
+name: "✨ Enhancement"
+description: "Report a enhancement task with acceptance criteria and dependencies."
+title: "[Enhancement]: "
+labels: ["enhancement", "P3"]
+assignees: ["danielep71"]
+body:
+  - type: markdown
+    attributes:
+      value: "Use synthetic examples and omit secrets. Triage assigns a milestone and confirms priority; P1 is reserved for confirmed calculation bugs."
+  - type: textarea
+    id: summary
+    attributes:
+      label: "Summary and impact"
+      description: "Describe the problem or proposed change."
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: "Evidence and reproduction"
+      description: "Give the exact commit, reproduction steps, and expected versus actual behavior where applicable."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "Acceptance criteria"
+      description: "Describe how the completed work will be validated."
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: "Dependencies and blocking status"
+      description: "Name prerequisite issues with #123 or use External condition: followed by the blocker. Write None if unblocked."
+    validations:
+      required: true

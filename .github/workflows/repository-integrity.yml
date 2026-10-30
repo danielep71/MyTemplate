@@ -21,6 +21,13 @@ jobs:
           persist-credentials: false
       - name: Test repository setup
         run: python3 -m unittest discover -s tests -v
+      - name: Test label automation
+        run: |
+          node .github/scripts/labels-sync.mjs --self-test
+          node .github/scripts/labels-sync.mjs --mode validate
+          node .github/scripts/labels-drift.mjs --self-test
+          python3 -m unittest discover -s tools -p 'test_check_issues.py' -v
+          python3 tools/check_issues.py --check-config
       - name: Validate template contents
         shell: bash
         env:
