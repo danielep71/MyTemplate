@@ -121,8 +121,8 @@ reports on every relevant PR before adopting these rules.
 
 ## Applying this baseline
 
-The executable configuration is [repository-settings.json](repository-settings.json).
-See [REPOSITORY_SETUP.md](REPOSITORY_SETUP.md) for preview, apply and verification commands.
+The executable configuration is [repository-settings.json](../setup/repository-settings.json).
+See [REPOSITORY_SETUP.md](../setup/REPOSITORY_SETUP.md) for preview, apply and verification commands.
 The script covers the four general differences and five rulesets documented above;
 it does not configure the security features excluded from this reference.
 `Protect main` is the API ruleset name for the default-branch protection above;

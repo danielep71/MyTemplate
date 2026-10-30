@@ -51,4 +51,4 @@ Only synchronization has `issues: write`. PR validation is read-only. Actions ar
 
 ## Provenance
 
-Label manifests, synchronization/drift scripts and workflows, and the issue triage checker/tests are imported or adapted from [danielep71/K-SFTs](https://github.com/danielep71/K-SFTs). Those imported/adapted files remain covered by the [Mozilla Public License 2.0](licenses/MPL-2.0.txt). Template adaptation changes policy mode, documentation references, and validation integration; issue forms are generic to this template. This notice does not apply that license to unrelated project files.
+Label manifests, synchronization/drift scripts and workflows, and the issue triage checker/tests are imported or adapted from [danielep71/K-SFTs](https://github.com/danielep71/K-SFTs). Those imported/adapted files remain covered by the [Mozilla Public License 2.0](../licenses/MPL-2.0.txt). Template adaptation changes policy mode, documentation references, and validation integration; issue forms are generic to this template. This notice does not apply that license to unrelated project files.
