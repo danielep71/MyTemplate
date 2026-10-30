@@ -127,4 +127,3 @@ The script covers the four general differences and five rulesets documented abov
 it does not configure the security features excluded from this reference.
 `Protect main` is the API ruleset name for the default-branch protection above;
 its target is `~DEFAULT_BRANCH`, not a fixed branch name.
-
