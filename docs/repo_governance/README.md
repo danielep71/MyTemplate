@@ -19,3 +19,7 @@ Update guidance together with its executable configuration. Keep label configura
 Use descriptive task branches such as `docs/`, `fix/`, `feat/`, or `chore/`. Submit changes through a pull request and keep the required **Repository integrity** check passing.
 
 Keep this index and the ongoing governance guides after project launch. Follow the setup guide before retiring setup tooling, and update this index if any linked files are removed.
+
+## Editorial voice
+
+When documenting my decisions or responsibilities, use first person ("I", "me", "my") rather than referring to me as "the maintainer" or "the owner". Keep instructions to contributors and template users addressed to the reader. Preserve exact technical identifiers and clearly distinguish explanatory prose from verbatim configuration values.
