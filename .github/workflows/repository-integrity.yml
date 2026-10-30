@@ -1,0 +1,35 @@
+name: Repository integrity
+
+on:
+  pull_request:
+    branches: [main, "release/**"]
+  push:
+    branches: [main, "release/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repository-integrity:
+    name: Repository integrity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate template contents
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          test -s README.md
+          test -s docs/REPOSITORY_SETTINGS.md
+          if [[ -n "$BASE_SHA" && ! "$BASE_SHA" =~ ^0+$ ]]; then
+            git diff --check "$BASE_SHA" HEAD
+          else
+            git show --format= --check HEAD
+          fi
