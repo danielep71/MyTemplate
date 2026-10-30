@@ -121,6 +121,7 @@ inherited policies may impose additional restrictions.
 | `tests/test_setup_repository.py` | **Keep while retaining setup tooling** | Imports the setup script and reads its JSON configuration. |
 | `docs/setup/REPOSITORY_SETUP.md` | **Keep or retire after handover** | Optional operational guide; remove links to it if you retire it. |
 | `.github/workflows/repository-integrity.yml` | **Keep and evolve** | Supplies the required `Repository integrity` check. Add project-specific checks as the project grows. |
+| `docs/repo_governance/certifications/` | **Remove or replace in a generated repository** | Existing snapshots certify only their named repository and commit. Remove their index links too; retain the reusable checks. |
 | GitHub **Template repository** setting | **Review separately** | Choose whether the new project should itself be reusable as a template; the setup script does not change this flag. |
 
 ### Optional: retire the setup tooling

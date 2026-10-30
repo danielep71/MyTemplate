@@ -17,3 +17,7 @@ Ongoing repository rules and maintenance guidance live here. One-time initializa
 Settings are defined in the [settings configuration](../setup/repository-settings.json). Label configuration, issue forms, and automation live under `.github/`.
 
 Changes follow the protected pull-request process and must pass **Repository integrity**. The [setup guide](../setup/REPOSITORY_SETUP.md) explains initialization, verification, and which files to retain after launch.
+
+## Verification records
+
+- [30 October 2026 — certified template snapshot](certifications/2026-10-30.md). Applies only to the identified repository and commit; generated repositories require their own verification.
