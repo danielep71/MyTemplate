@@ -14,7 +14,7 @@ import check_issues
 from check_issues import Issue
 
 ROOT = Path(__file__).resolve().parents[1]
-REPOSITORY = "danielep71/K-SFTs"
+REPOSITORY = "example/project"
 BLOCKED_LABEL = check_issues.BLOCKED
 READY = "## Dependencies and blocking status\n\n**Ready to start**: none.\n"
 
@@ -109,6 +109,22 @@ class ConfigTests(unittest.TestCase):
     def test_repository_configuration_passes(self) -> None:
         self.assertEqual(check_issues.config_findings(ROOT), [])
 
+    def test_generated_policy_includes_only_selected_overlays(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / ".github").mkdir()
+            manifest = {"core": [{"name": "bug"}], "overlays": {
+                "profile": {"library": [{"name": "api"}], "application": [{"name": "ui"}]},
+                "domain": {"finance": [{"name": "pricing"}]}}}
+            (root / ".github/labels.json").write_text(json.dumps(manifest))
+            path = root / ".github/label-policy.json"
+            path.write_text(json.dumps({"mode": "generated", "profile": "library",
+                                        "label_domains": ["finance"]}))
+            self.assertEqual(check_issues.catalogue_labels(root), {"bug", "api", "pricing"})
+            path.write_text(json.dumps({"mode": "template", "profile": None,
+                                        "label_domains": []}))
+            self.assertEqual(check_issues.catalogue_labels(root), {"bug"})
+
     def test_flow_list(self) -> None:
         text = 'name: x\nlabels: ["bug", "P2"]\nassignees: [danielep71]\n'
         self.assertEqual(check_issues.flow_list(text, "labels"), ["bug", "P2"])
@@ -131,7 +147,7 @@ class MainTests(unittest.TestCase):
             output = Path(directory) / "report.json"
             with contextlib.redirect_stdout(io.StringIO()) as stdout:
                 code = check_issues.main(["--root", str(ROOT), "--input", str(source),
-                                          "--output", str(output)])
+                                          "--output", str(output), "--repo-name", REPOSITORY])
             self.assertEqual(code, 1)
             report = json.loads(output.read_text(encoding="utf-8"))
             self.assertEqual(report["status"], "fail")

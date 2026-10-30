@@ -16,7 +16,7 @@
 
 ## Branch names
 
-Use descriptive prefixes such as `docs/`, `fix/`, `feat/`, or `chore/`. Do not use `codex/` or `claude/`
+Use descriptive prefixes such as `docs/`, `fix/`, `feat/`, or `chore/`. Do not use `codex/` or `claude/`.
 
 ## Audience separation
 
