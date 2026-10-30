@@ -12,20 +12,8 @@ Ongoing repository rules and maintenance guidance live here. One-time initializa
 | [🚀 Repository setup](../setup/REPOSITORY_SETUP.md) | Preview, apply, verify, and hand over a newly generated repository. |
 | [📋 Settings configuration](../setup/repository-settings.json) | Machine-readable baseline used by the setup script. |
 
-## Maintenance
+## Repository controls
 
-Update guidance together with its executable configuration. Keep label configuration and automation under `.github/`, where GitHub workflows and issue forms are discovered. Keep GitHub-discovered community files such as `CONTRIBUTING.md` and `SECURITY.md` in their standard locations when they are added.
+Settings are defined in the [settings configuration](../setup/repository-settings.json). Label configuration, issue forms, and automation live under `.github/`.
 
-Use descriptive task branches such as `docs/`, `fix/`, `feat/`, or `chore/`. Submit changes through a pull request and keep the required **Repository integrity** check passing.
-
-Keep this index and the ongoing governance guides after project launch. Follow the setup guide before retiring setup tooling, and update this index if any linked files are removed.
-
-## Editorial voice
-
-When documenting my decisions or responsibilities, use first person ("I", "me", "my") rather than referring to me as "the maintainer" or "the owner". Keep instructions to contributors and template users addressed to the reader. Preserve exact technical identifiers and clearly distinguish explanatory prose from verbatim configuration values.
-
-## Repository scope
-
-Write documentation as a self-contained description of this repository. Do not mention other repositories, copied-from history, unrelated projects, or conversation context in operational guidance. Describe the current files, configuration, and behavior directly. Ensure these instructions remain meaningful when copied into a new repository.
-
-Keep links to external documentation only when needed to use a dependency or platform. Keep third-party licensing notices in dedicated license files, separate from operational guidance.
+Changes follow the protected pull-request process and must pass **Repository integrity**. The [setup guide](../setup/REPOSITORY_SETUP.md) explains initialization, verification, and which files to retain after launch.

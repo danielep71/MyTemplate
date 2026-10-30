@@ -26,7 +26,7 @@ Only synchronization has `issues: write`. PR validation is read-only. Actions ar
 
 ## 🎨 Catalogue
 
-The table below explains label meanings in my voice. Exact GitHub descriptions are defined in `.github/labels.json`, which synchronization uses as its source of truth.
+The table below summarizes label meanings. Exact GitHub descriptions are defined in `.github/labels.json`, which synchronization uses as its source of truth.
 
 | Label | Colour | Meaning |
 | --- | --- | --- |
