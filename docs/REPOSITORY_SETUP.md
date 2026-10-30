@@ -197,3 +197,7 @@ and settings-maintenance process instead.
 · [GitHub CLI API](https://cli.github.com/manual/gh_api)
 
 [↑ Back to top](#-repository-setup)
+
+## 🏷️ Initialize issue labels
+
+After creating a repository, run **Actions → Sync issue labels → Run workflow** on the default branch. This installs the 20 K-SFTs labels, including exact descriptions and colours. See [labels and automation](LABELS.md) for triage rules and maintainer customization. Keep the label configuration, scripts, workflows, forms, and triage tests after setup; they are ongoing automation, not bootstrap leftovers.
