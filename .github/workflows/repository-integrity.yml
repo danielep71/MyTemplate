@@ -34,7 +34,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           test -s README.md
-          test -s docs/REPOSITORY_SETTINGS.md
+          test -s docs/repo_governance/SETTINGS.md
           if [[ -n "$BASE_SHA" && ! "$BASE_SHA" =~ ^0+$ ]]; then
             git diff --check "$BASE_SHA" HEAD
           else

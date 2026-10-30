@@ -88,7 +88,7 @@ working directory. Use `--config PATH` for a reviewed baseline with the same sch
 ## 🛡️ What this applies
 
 The [JSON configuration](repository-settings.json) is the executable counterpart
-of the [settings reference](REPOSITORY_SETTINGS.md).
+of the [settings reference](../repo_governance/SETTINGS.md).
 
 | Layer | Managed configuration |
 | --- | --- |
@@ -115,11 +115,11 @@ inherited policies may impose additional restrictions.
 | File or setting | Action in the new repository | Reason / dependency |
 | --- | --- | --- |
 | `README.md` | **Adapt** | Replace the MyTemplate title and introduction with the project's purpose, installation and usage. Keep or replace setup links deliberately. |
-| `docs/REPOSITORY_SETTINGS.md` | **Keep and maintain** | Records the adopted baseline. The integrity workflow explicitly requires this file. |
-| `docs/repository-settings.json` | **Keep** | Enables future drift checks and reapplication. The setup tests read this file. |
+| `docs/repo_governance/SETTINGS.md` | **Keep and maintain** | Records the adopted baseline. The integrity workflow explicitly requires this file. |
+| `docs/setup/repository-settings.json` | **Keep** | Enables future drift checks and reapplication. The setup tests read this file. |
 | `tools/setup_repository.py` | **Keep** | Provides preview, apply and verification for future maintenance. |
 | `tests/test_setup_repository.py` | **Keep while retaining setup tooling** | Imports the setup script and reads its JSON configuration. |
-| `docs/REPOSITORY_SETUP.md` | **Keep or retire after handover** | Optional operational guide; remove links to it if you retire it. |
+| `docs/setup/REPOSITORY_SETUP.md` | **Keep or retire after handover** | Optional operational guide; remove links to it if you retire it. |
 | `.github/workflows/repository-integrity.yml` | **Keep and evolve** | Supplies the required `Repository integrity` check. Add project-specific checks as the project grows. |
 | GitHub **Template repository** setting | **Review separately** | Choose whether the new project should itself be reusable as a template; the setup script does not change this flag. |
 
@@ -141,12 +141,12 @@ utilities. Keep them in the source template so future repositories receive them.
    ```text
    tools/setup_repository.py
    tests/test_setup_repository.py
-   docs/repository-settings.json
-   docs/REPOSITORY_SETUP.md
+   docs/setup/repository-settings.json
+   docs/setup/REPOSITORY_SETUP.md
    ```
 
-5. Update `README.md` and the **Applying this baseline** section of
-   `docs/REPOSITORY_SETTINGS.md`: remove links and commands that reference deleted
+5. Update `README.md`, `docs/repo_governance/README.md`, and the **Applying this baseline** section of
+   `docs/repo_governance/SETTINGS.md`: remove links and commands that reference deleted
    files, and explain how settings will be maintained going forward. Preserve the
    actual settings reference.
 6. Verify that the cleanup PR reports a passing **`Repository integrity`** check
@@ -200,4 +200,4 @@ and settings-maintenance process instead.
 
 ## 🏷️ Initialize issue labels
 
-After creating a repository, run **Actions → Sync issue labels → Run workflow** on the default branch. This installs the 20 K-SFTs labels, including exact descriptions and colours. See [labels and automation](LABELS.md) for triage rules and maintainer customization. Keep the label configuration, scripts, workflows, forms, and triage tests after setup; they are ongoing automation, not bootstrap leftovers.
+After creating a repository, run **Actions → Sync issue labels → Run workflow** on the default branch. This installs the 20 labels defined in this repository, including exact descriptions and colours. See [labels and automation](../repo_governance/ISSUE_LABELS.md) for triage rules and instructions for replacing my default assignee account in a generated repository. Keep the label configuration, scripts, workflows, forms, and triage tests after setup; they are ongoing automation, not bootstrap leftovers.

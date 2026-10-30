@@ -2,7 +2,7 @@
 """Check issue metadata and dependency status that issue forms cannot enforce.
 
 Read-only: the check never changes an issue. It reports findings for the
-maintainer to resolve by hand (docs/LABELS.md, Issues).
+maintainer to resolve by hand (docs/repo_governance/ISSUE_LABELS.md, Issues).
 """
 
 from __future__ import annotations
@@ -237,7 +237,7 @@ def render(findings: Sequence[Finding], audited: int) -> str:
         lines += ["| Issue | Rule | Finding |", "| --- | --- | --- |"]
         lines += [f"| #{f.number} | `{f.rule}` | {f.message} |" for f in findings]
         lines += ["", "Resolve each finding by hand; this check never changes an issue. "
-                  "See docs/LABELS.md, Issues."]
+                  "See docs/repo_governance/ISSUE_LABELS.md, Issues."]
     else:
         lines.append("Every open issue meets the triage rules.")
     return "\n".join(lines) + "\n"

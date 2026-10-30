@@ -9,7 +9,7 @@ import subprocess
 import sys
 from urllib.parse import quote
 
-CONFIG = Path(__file__).resolve().parents[1] / 'docs/repository-settings.json'
+CONFIG = Path(__file__).resolve().parents[1] / 'docs/setup/repository-settings.json'
 RULE_KEYS = ('name', 'target', 'enforcement', 'conditions', 'rules', 'bypass_actors')
 GENERAL_KEYS = {'delete_branch_on_merge', 'allow_update_branch', 'has_projects', 'has_downloads'}
 
