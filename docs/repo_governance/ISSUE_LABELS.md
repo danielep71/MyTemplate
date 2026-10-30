@@ -8,7 +8,7 @@ This repository defines 20 issue labels, each with a name, description, and colo
 
 | Workflow | Purpose |
 | --- | --- |
-| Sync issue labels | Validates pull requests; reconciles labels after a catalogue change lands on main or a manual run on the default branch. Verifies the exact live result. |
+| Sync issue labels | Validates pull requests; reconciles labels after a catalogue change lands on the default branch or a manual run on the default branch. Verifies the exact live result. |
 | Detect issue-label drift | Checks daily at 05:17 UTC and manually; PR runs use offline fixtures. Reports drift without modifying labels. |
 | Issue triage | Audits open issues on issue events or manual runs. Reports missing assignee, priority, milestone, dependency section, invalid labels, and inconsistent blocked status. |
 
@@ -20,7 +20,7 @@ Only synchronization has `issues: write`. PR validation is read-only. Actions ar
 2. Keep template mode for the core catalogue, or set `.github/label-policy.json` to generated mode with profile `application`, `library`, or `ui-component`. Current overlays are empty, so each currently yields the same 20 labels.
 3. My GitHub account, `danielep71`, is the default assignee in `tools/check_issues.py` (`OWNER`), the three issue forms (`assignees`), and corresponding test fixtures. If someone else maintains a generated repository, replace my account in all three places.
 4. Create project milestones, give each open issue exactly one priority and a milestone, and assign it to me (or the account configured for a generated repository). Use `blocked` only for a named open prerequisite or `External condition:`. P1 is reserved for confirmed calculation bugs.
-5. If the default branch is renamed, update the main branch filters in the sync and drift workflows.
+5. Label validation covers pull requests to every branch. Live synchronization runs only on the current default branch, including after a rename.
 
 **Keep** the label manifests, scripts, all three workflows, issue forms, triage checker/tests, and this guide after bootstrap. They provide ongoing maintenance and must not be deleted with one-time repository setup files.
 
@@ -50,3 +50,13 @@ The table below lists the descriptions defined in `.github/labels.json`, which s
 | `security` | `#8B0000` | Security boundary, vulnerability handling, supply chain, or hardening |
 | `tests` | `#006B75` | Regression coverage, test harnesses, fixtures, or manual validation |
 | `wontfix` | `#6E7781` | I have decided not to implement or continue this work |
+
+## Offline issue audit
+
+Export issues in GitHub REST JSON format, then identify the repository explicitly so dependency URLs resolve correctly:
+
+```sh
+python tools/check_issues.py --input issues.json --repo-name OWNER/REPOSITORY
+```
+
+Triage uses the core labels and the profile/domain overlays selected in `.github/label-policy.json`.

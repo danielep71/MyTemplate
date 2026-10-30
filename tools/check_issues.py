@@ -2,7 +2,7 @@
 """Check issue metadata and dependency status that issue forms cannot enforce.
 
 Read-only: the check never changes an issue. It reports findings for the
-maintainer to resolve by hand (docs/repo_governance/ISSUE_LABELS.md, Issues).
+me to resolve by hand (docs/repo_governance/ISSUE_LABELS.md).
 """
 
 from __future__ import annotations
@@ -146,7 +146,23 @@ def audit(issues: Sequence[Issue], states: Mapping[int, str], repository: str,
 
 def catalogue_labels(root: Path) -> set[str]:
     data = json.loads((root / ".github" / "labels.json").read_text(encoding="utf-8"))
-    return {str(label["name"]) for label in data["core"]}
+    policy = json.loads((root / ".github" / "label-policy.json").read_text(encoding="utf-8"))
+    labels = list(data["core"])
+    mode = policy["mode"]
+    profile = policy["profile"]
+    domains = policy["label_domains"]
+    if mode == "template":
+        if profile is not None or domains:
+            raise ValueError("Template policy must select no overlays")
+    elif mode == "generated":
+        if profile not in data["overlays"]["profile"]:
+            raise ValueError("Generated policy must select a supported profile")
+        labels += data["overlays"]["profile"][profile]
+        for domain in domains:
+            labels += data["overlays"]["domain"][domain]
+    else:
+        raise ValueError("Repository policy mode must be template or generated")
+    return {str(label["name"]) for label in labels}
 
 
 def config_findings(root: Path) -> list[str]:
@@ -237,7 +253,7 @@ def render(findings: Sequence[Finding], audited: int) -> str:
         lines += ["| Issue | Rule | Finding |", "| --- | --- | --- |"]
         lines += [f"| #{f.number} | `{f.rule}` | {f.message} |" for f in findings]
         lines += ["", "Resolve each finding by hand; this check never changes an issue. "
-                  "See docs/repo_governance/ISSUE_LABELS.md, Issues."]
+                  "See docs/repo_governance/ISSUE_LABELS.md."]
     else:
         lines.append("Every open issue meets the triage rules.")
     return "\n".join(lines) + "\n"
@@ -251,11 +267,14 @@ def parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     source.add_argument("--input", type=Path, help="issues exported as GitHub REST JSON")
     source.add_argument("--check-config", action="store_true",
                         help="check the issue forms and label catalogue only (offline)")
-    parser.add_argument("--repo-name", default="danielep71/MyTemplate",
+    parser.add_argument("--repo-name",
                         help="repository used to resolve issue URLs with --input")
     parser.add_argument("--output", type=Path, help="write the findings as JSON")
     parser.add_argument("--summary", type=Path, help="append the Markdown report to this file")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.input and not args.repo_name:
+        parser.error("--input requires --repo-name owner/repository")
+    return args
 
 
 def main(argv: Sequence[str] | None = None) -> int:
