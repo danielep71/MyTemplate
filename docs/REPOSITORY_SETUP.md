@@ -1,88 +1,199 @@
-# Apply the repository settings baseline
+<div align="center">
 
-GitHub's **Use this template** copies files, not repository settings. Run this
-setup once for each new destination, after its first integrity workflow succeeds.
-It does not run automatically and never provisions or stores a credential.
+# 🚀 Repository Setup
 
-## Requirements
+**From template files to a configured GitHub repository**
 
-- Python 3.10 or later and a recent [GitHub CLI](https://cli.github.com/).
-- Authenticate with `gh auth login --hostname github.com` using an account with
-  administrator access to the destination. A fine-grained token needs repository
-  Administration (write), Contents (read), and Checks (read) permissions. A normal
-  Actions `GITHUB_TOKEN` cannot administer repository rulesets. Never commit tokens.
-- The destination must already exist and contain the template files. Enable Actions
-  and wait for `Repository integrity` to succeed on its current default-branch HEAD.
-- Review that the workflow runs on every relevant PR without path filters. The
-  supplied workflow runs on all branches, including a renamed default branch.
-- Repository-level merge and squash methods must be enabled (normal GitHub defaults).
-- Rulesets must be supported by the destination's GitHub plan and visibility.
+[![Scope](https://img.shields.io/badge/Scope-4_settings_%C2%B7_5_rulesets-00338D?style=flat-square)](#-what-this-applies)
+[![Mode](https://img.shields.io/badge/Default-Preview_only-005EB8?style=flat-square)](#-launch-sequence)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](#-before-you-start)
+[![Verification](https://img.shields.io/badge/Verification-Read_back_after_apply-00875A?style=flat-square)](#-verification-and-recovery)
 
-## Commands
+[Prepare](#-before-you-start) · [Launch](#-launch-sequence) · [Coverage](#-what-this-applies) · [Clean up](#-after-launch-keep-adapt-or-remove) · [Maintain](#-maintain-the-baseline)
 
-Run from the copied repository directory; substitute the actual destination:
+</div>
+
+---
+
+> [!IMPORTANT]
+> GitHub's **Use this template** copies files, not repository settings. Run this
+> setup for each new destination after its first integrity workflow succeeds.
+> The script does not run automatically and never creates or stores credentials.
+
+## 🧭 Before you start
+
+| Prerequisite | Ready when… |
+| --- | --- |
+| **Runtime** | Python **3.10+** and a recent [GitHub CLI](https://cli.github.com/) are installed. |
+| **Destination** | The new repository exists and contains the template files. |
+| **Identity** | `gh auth login --hostname github.com` is complete using an account with administrator access to the destination. |
+| **Token permissions** | A fine-grained token has repository **Administration: write**, **Contents: read**, and **Checks: read**. A normal Actions `GITHUB_TOKEN` cannot administer these rulesets. Never commit tokens. |
+| **Integrity check** | Actions is enabled and `Repository integrity` has succeeded on the **current default-branch HEAD**. |
+| **Workflow coverage** | The required job runs on every relevant PR without path filters. The supplied workflow runs on all branches, including a renamed default branch. |
+| **Merge methods** | Repository-level merge commits and squash merging are enabled. |
+| **Availability** | The destination's plan and visibility support repository rulesets. |
+
+## ▶️ Launch sequence
+
+Run from the copied repository directory. Replace `OWNER/NEW-REPO` with the
+**new destination**, not the source template.
+
+### ① Preview the changes
 
 ```sh
-# Read-only preview (default mode)
 python tools/setup_repository.py --repo OWNER/NEW-REPO
+```
 
-# Apply missing rulesets and general settings, then read back and verify
+Read-only by default. Review the printed destination, visibility, default branch,
+and proposed API changes before applying them.
+
+### ② Apply the baseline
+
+```sh
 python tools/setup_repository.py --repo OWNER/NEW-REPO --apply
+```
 
-# Read-only verification; useful after setup or later configuration changes
+The script creates missing rulesets, patches differing general settings, and reads
+back the result. Protection is installed before automatic branch deletion is enabled.
+
+### ③ Verify the result
+
+```sh
 python tools/setup_repository.py --repo OWNER/NEW-REPO --check
 ```
 
-A differing existing ruleset with a managed name blocks apply before any writes.
-After reviewing the preview, explicitly permit replacing the entire named ruleset:
+A verified match returns **0**. Retain the result in your launch record before
+considering cleanup. Running apply again against matching settings makes no writes.
+
+<details>
+<summary><strong>⚙️ Advanced: reconcile an existing named ruleset</strong></summary>
+
+A differing managed ruleset blocks apply before any writes. After reviewing the
+preview, explicitly allow replacement of its entire definition:
 
 ```sh
 python tools/setup_repository.py --repo OWNER/NEW-REPO --apply --update-existing
 ```
 
-Replacement removes additional rules or bypasses within that named ruleset. Rulesets
-with other names and inherited organization rules remain unchanged. Duplicate managed
-names are rejected. General settings are patched only when different. Repeating a
-successful apply makes no writes. Preview and check never write.
+Replacement removes additional rules or bypasses inside that named ruleset.
+Rulesets with other names and inherited organization rules remain unchanged.
+Duplicate managed names are rejected.
 
-The script uses explicit repository and GitHub.com arguments; it does not infer a
-repository from the current directory. You may run it from another location, since
-its default JSON path is relative to the script. `--config PATH` selects a reviewed
-alternative baseline with the same schema.
+The destination is always explicit; it is never inferred from the current directory.
+The default JSON path is relative to the script, so it also works from another
+working directory. Use `--config PATH` for a reviewed baseline with the same schema.
 
-## Coverage and verification
+</details>
 
-[repository-settings.json](repository-settings.json) is the executable counterpart
-of [REPOSITORY_SETTINGS.md](REPOSITORY_SETTINGS.md): four general settings and five
-active rulesets, without bypass actors. `Protect main` targets the current default
-branch through `~DEFAULT_BRANCH`.
+## 🛡️ What this applies
 
-The script reads all pages, compares full rule definitions without response metadata,
-creates protection before enabling automatic branch deletion, and reads back all
-managed settings after changes. A successful current-HEAD check is a prerequisite,
-not proof of future CI coverage or destructive enforcement testing. New rulesets are
-installed with active enforcement. No branches, tags, releases or PRs are created.
+The [JSON configuration](repository-settings.json) is the executable counterpart
+of the [settings reference](REPOSITORY_SETTINGS.md).
 
-Exit codes: **0** successful preview or verified match; **1** drift in `--check`;
-**2** invalid configuration, missing prerequisite, inaccessible/unsupported feature,
-API failure or verification failure. There is no silent skip and no success claim
-for partially applied settings. API operations are not transactional: if a later
-request fails, earlier changes remain. Rerun preview, resolve the reported failure,
-and reapply. The script does not automatically roll back protection.
+| Layer | Managed configuration |
+| --- | --- |
+| **General · 4 settings** | Delete merged head branches; suggest PR branch updates; disable Projects; disable the legacy downloads flag. |
+| **Protection · 5 rulesets** | Default branch, release branches, independent release-branch deletion protection, release tags, and traffic history. |
+| **Enforcement** | Active rulesets with no bypass actors or ref exclusions. `Protect main` targets `~DEFAULT_BRANCH`, not a fixed branch name. |
+| **Verification** | All pages are read; full rule definitions are compared without response metadata; managed settings are read back after apply. |
 
-Visibility, template mode, security switches (Dependabot, CodeQL, Secret Protection),
-Actions policy, Pages, secrets, environments, labels, collaborators and integrations
-are outside this Markdown baseline and are not changed. Destination defaults and
-inherited policies may impose additional restrictions. This is not a complete
-configuration clone of the source repository.
+**Outside this baseline:** visibility, template mode, security switches (Dependabot,
+CodeQL, Secret Protection), Actions policy, Pages, secrets, environments, labels,
+collaborators and integrations. Configure these separately where required.
+The script creates no branches, tags, releases or PRs. Destination defaults and
+inherited policies may impose additional restrictions.
 
-When editing the baseline, update the JSON and Markdown together and review the
-preview before applying it. Tests run without credentials or network access:
+## 🧹 After launch: keep, adapt or remove
+
+> [!TIP]
+> **Nothing must be deleted after setup.** Keeping the script and configuration
+> lets you run `--check` later and reapply an approved baseline. Removing local
+> setup files does not undo settings already saved on GitHub.
+
+### Recommended handover
+
+| File or setting | Action in the new repository | Reason / dependency |
+| --- | --- | --- |
+| `README.md` | **Adapt** | Replace the MyTemplate title and introduction with the project's purpose, installation and usage. Keep or replace setup links deliberately. |
+| `docs/REPOSITORY_SETTINGS.md` | **Keep and maintain** | Records the adopted baseline. The integrity workflow explicitly requires this file. |
+| `docs/repository-settings.json` | **Keep** | Enables future drift checks and reapplication. The setup tests read this file. |
+| `tools/setup_repository.py` | **Keep** | Provides preview, apply and verification for future maintenance. |
+| `tests/test_setup_repository.py` | **Keep while retaining setup tooling** | Imports the setup script and reads its JSON configuration. |
+| `docs/REPOSITORY_SETUP.md` | **Keep or retire after handover** | Optional operational guide; remove links to it if you retire it. |
+| `.github/workflows/repository-integrity.yml` | **Keep and evolve** | Supplies the required `Repository integrity` check. Add project-specific checks as the project grows. |
+| GitHub **Template repository** setting | **Review separately** | Choose whether the new project should itself be reusable as a template; the setup script does not change this flag. |
+
+### Optional: retire the setup tooling
+
+Use this route only in a **generated project** where you no longer want the setup
+utilities. Keep them in the source template so future repositories receive them.
+
+1. Run `--check` successfully and preserve the result and adopted configuration in
+   the project's handover record.
+2. Create a normal task branch and PR for cleanup. Protection remains active after
+   setup; do not rely on direct pushes to the default branch.
+3. In that same PR, replace the workflow's **Test repository setup** step with
+   meaningful project checks. Keep the job name **`Repository integrity`**, its
+   coverage of all relevant PRs, and the existing required-document and whitespace
+   checks. If keeping test discovery, ensure real project tests remain and run.
+4. Remove only the retired setup files, together:
+
+   ```text
+   tools/setup_repository.py
+   tests/test_setup_repository.py
+   docs/repository-settings.json
+   docs/REPOSITORY_SETUP.md
+   ```
+
+5. Update `README.md` and the **Applying this baseline** section of
+   `docs/REPOSITORY_SETTINGS.md`: remove links and commands that reference deleted
+   files, and explain how settings will be maintained going forward. Preserve the
+   actual settings reference.
+6. Verify that the cleanup PR reports a passing **`Repository integrity`** check
+   with the intended project checks, then merge it through the protected PR process.
+
+> [!WARNING]
+> Do not delete the integrity workflow or rename its required job during cleanup.
+> GitHub would continue waiting for that check and block merges. Deleting only the
+> script or JSON would also break the existing setup tests. Remove individual files,
+> not entire `tools/`, `tests/`, `docs/` or `.github/` directories.
+
+Cleanup is documented as a reviewed PR because replacing template tests with useful
+project validation depends on the new project. There is no automatic deletion step.
+
+## 🔎 Verification and recovery
+
+| Exit code | Meaning | Next action |
+| --- | --- | --- |
+| **0** | Successful preview, or verified match in apply/check mode | Read the mode-specific message: preview success does not mean settings were applied. |
+| **1** | Drift found by `--check` | Preview the differences and decide whether to reapply. |
+| **2** | Invalid configuration, missing prerequisite, unavailable feature, API failure or read-back mismatch | Resolve the reported problem, then preview and retry. |
+
+API operations are **not transactional**. If a later request fails, earlier changes
+remain. There is no silent skip, no success claim for partial application and no
+automatic rollback of protection. Rerun preview to see what remains.
+
+A passing check on the current HEAD is a prerequisite, not proof of future workflow
+coverage or destructive enforcement testing. Verification covers the documented
+settings, not every GitHub setting or inherited policy.
+
+## 🔄 Maintain the baseline
+
+Update the JSON and Markdown together when changing policy, review the preview,
+and run the offline tests before applying it:
 
 ```sh
 python -m unittest discover -s tests -v
 ```
 
-API references: [repository updates](https://docs.github.com/en/rest/repos/repos#update-a-repository),
-[rulesets](https://docs.github.com/en/rest/repos/rules),
-[GitHub CLI API calls](https://cli.github.com/manual/gh_api).
+The tests require neither credentials nor network access. Once setup tooling has
+been retired from a generated project, use that project's replacement validation
+and settings-maintenance process instead.
+
+---
+
+**References:** [Repository updates](https://docs.github.com/en/rest/repos/repos#update-a-repository)
+· [Rulesets](https://docs.github.com/en/rest/repos/rules)
+· [GitHub CLI API](https://cli.github.com/manual/gh_api)
+
+[↑ Back to top](#-repository-setup)
