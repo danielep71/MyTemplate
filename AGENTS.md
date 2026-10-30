@@ -21,3 +21,7 @@ Use descriptive prefixes such as `docs/`, `fix/`, `feat/`, or `chore/`. Do not u
 ## Audience separation
 
 Keep editorial rules, assistant instructions, branch-naming preferences, and collaboration conventions in this file. Reader-facing documentation must explain the repository and its usage, not our writing process. Apply the requested voice naturally; do not explain that prose is written “in my voice”.
+
+## Template defaults
+
+This repository is a template for future projects. Preserve useful policies and assumptions for file types, tooling, and reserved paths even when they are not used by this template itself. Adapt project-specific names and historical references without stripping reusable capabilities. Describe reserved paths as conventions, not as files or directories that already exist.

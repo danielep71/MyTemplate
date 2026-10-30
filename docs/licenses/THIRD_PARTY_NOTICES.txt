@@ -3,6 +3,9 @@ Third-party source notice
 The following files were imported or adapted from danielep71/K-SFTs
 (https://github.com/danielep71/K-SFTs) under the Mozilla Public License 2.0:
 
+.editorconfig
+.gitattributes
+.gitignore
 .github/labels.json
 .github/label-policy.json
 .github/scripts/labels-sync.mjs
