@@ -114,9 +114,13 @@ value does.
 - **Same-day runs:** a collection day's snapshot, referrers and paths are one
   unit, replaced only if any of the three changed. Running the workflow twice
   with the same data changes nothing.
-- **Order:** an older collection merged after a newer one, for example when a
-  run is rebuilt on a newer branch tip, never replaces what the newer one
-  stored; it can only fill a date or metric that nothing newer reported.
+- **Order:** each metric keeps the time of the collection that last
+  *changed* it, not of the latest one that reported it. An older collection
+  merged after a newer one therefore leaves the newer values in place only
+  while a date's counts never decrease between collections. If they do, the
+  older collection can overwrite them. The workflow merges only the collection
+  it has just fetched, so this can happen only when an old saved collection
+  is merged by hand: never do that.
 
 ### Zero or unavailable
 
@@ -179,5 +183,6 @@ invalid, and leaves the history unchanged. Read the failing step:
 A failed run can always be repeated: the merge is idempotent, and each
 collection covers the last 14 days. To repair the branch, change it with a new
 commit made with `python tools/traffic_history.py merge` or by hand, keeping
-every header. `python tools/traffic_history.py init --data data` recreates
+every header. Merge only a collection fetched for the repair, never an older
+saved one (*Order* above). `python tools/traffic_history.py init --data data` recreates
 missing files with their headers and never overwrites an existing one.
