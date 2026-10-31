@@ -22,6 +22,18 @@ Use descriptive prefixes such as `docs/`, `fix/`, `feat/`, or `chore/`. Do not u
 
 Keep editorial rules, assistant instructions, branch-naming preferences, and collaboration conventions in this file. Reader-facing documentation must explain the repository and its usage, not our writing process. Apply the requested voice naturally; do not explain that prose is written “in my voice”.
 
+## Review findings
+
+When a review of this repository finds something to fix, record each finding, or each group of findings that one change will fix, as an issue before or instead of fixing it silently. Every such issue must pass **Issue triage** (`docs/repo_governance/ISSUE_LABELS.md`):
+
+- assigned to me;
+- exactly one priority label (`P1` only for a confirmed calculation bug), plus the type labels that fit;
+- the open milestone with the earliest due date;
+- a `- Target end date: YYYY-MM-DD (Europe/Rome)` line earlier than that milestone's due date;
+- a dependency section that names prerequisites or says "None".
+
+Describe the finding with its file and line, the evidence, why it matters, and the proposed fix, so the issue can be resolved without the review that found it.
+
 ## Domain defaults
 
 This repository holds, or provides the starting point for, a regulatory risk calculation workbook such as SA-CCR, SFT, FRTB, LCR, or NSFR. Excel workbooks, exported VBA source, regulatory source copies under `docs/methodology/sources/`, the P1 definition for confirmed calculation bugs, the `traffic-history` branch, and related reserved paths are intended defaults. Do not report them as leftovers from another project.
