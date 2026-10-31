@@ -32,6 +32,35 @@ class CatalogueDocumentationTests(unittest.TestCase):
         self.assertEqual([item for item in counts if item[1] != expected], [])
 
 
+def yaml_list(text, key):
+    """Return the block-list items under ``key:`` in a simple YAML file."""
+    items, indent = [], None
+    for line in text.splitlines():
+        stripped = line.strip()
+        if indent is None:
+            if stripped == f'{key}:':
+                indent = len(line) - len(line.lstrip())
+            continue
+        if stripped.startswith('- ') and len(line) - len(line.lstrip()) > indent:
+            items.append(stripped[2:].strip().strip('"\''))
+        elif stripped:
+            indent = None
+    return items
+
+
+class DependabotTests(unittest.TestCase):
+    def test_labels_exist_and_assignee_matches_the_issue_forms(self):
+        text = (ROOT / '.github/dependabot.yml').read_text(encoding='utf-8')
+        manifest = json.loads((ROOT / '.github/labels.json').read_text(encoding='utf-8'))
+        catalogue = {label['name'] for label in manifest['labels']}
+        labels = yaml_list(text, 'labels')
+        self.assertTrue(labels)
+        self.assertEqual([label for label in labels if label not in catalogue], [])
+        form = (ROOT / '.github/ISSUE_TEMPLATE/bug.yml').read_text(encoding='utf-8')
+        assignee = re.search(r'^assignees:\s*\[\s*"?([^",\]]+)"?\s*\]', form, re.M).group(1)
+        self.assertEqual(set(yaml_list(text, 'assignees')), {assignee})
+
+
 class TemplateOnlyContentTests(unittest.TestCase):
     def test_reference_repositories_are_named_only_where_allowed(self):
         agents = (ROOT / 'AGENTS.md').read_text(encoding='utf-8')

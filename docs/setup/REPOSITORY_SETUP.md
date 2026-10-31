@@ -104,8 +104,8 @@ of the [settings reference](../repo_governance/SETTINGS.md).
 | **Enforcement** | Active rulesets with no bypass actors or ref exclusions. `Protect main` targets `~DEFAULT_BRANCH`, not a fixed branch name. |
 | **Verification** | All pages are read; full rule definitions are compared without response metadata; managed settings are read back after apply. |
 
-**Outside this baseline:** visibility, template mode, security switches (Dependabot,
-CodeQL, Secret Protection), Actions policy, Pages, secrets, environments, labels,
+**Outside this baseline:** visibility, template mode, security switches (Dependabot
+alerts and security updates, CodeQL, Secret Protection), Actions policy, Pages, secrets, environments, labels,
 collaborators and integrations. Configure these separately where required.
 The script creates no branches, tags, releases or PRs. Destination defaults and
 inherited policies may impose additional restrictions.
@@ -130,6 +130,7 @@ inherited policies may impose additional restrictions.
 | `tools/setup_repository.py` | **Keep** | Provides preview, apply and verification for future maintenance. |
 | `tests/test_setup_repository.py` | **Keep while retaining setup tooling** | Imports the setup script and reads its JSON configuration. |
 | `docs/setup/REPOSITORY_SETUP.md` | **Keep or retire after handover** | Optional operational guide; remove links to it if you retire it. |
+| `.github/dependabot.yml` | **Keep** | Proposes updates to the SHA-pinned Actions. Set `target-branch` if development happens on a release branch. |
 | `.github/workflows/repository-integrity.yml` | **Keep and evolve** | Supplies the required `Repository integrity` check. Add project-specific checks as the project grows. |
 | GitHub **Template repository** setting | **Review separately** | Choose whether the new project should itself be reusable as a template; the setup script does not change this flag. |
 

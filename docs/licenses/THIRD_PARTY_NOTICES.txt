@@ -6,6 +6,7 @@ The following files were imported or adapted from danielep71/K-SFTs
 .editorconfig
 .gitattributes
 .gitignore
+.github/dependabot.yml
 .github/ISSUE_TEMPLATE/bug.yml
 .github/ISSUE_TEMPLATE/documentation.yml
 .github/ISSUE_TEMPLATE/enhancement.yml

@@ -11,6 +11,7 @@ This repository defines 20 issue labels, each with a name, description, and colo
 | Sync issue labels | Validates pull requests; reconciles labels after a catalogue change lands on the default branch or a manual run on the default branch. Verifies the exact live result. |
 | Detect issue-label drift | Checks daily at 05:17 UTC and manually; PR runs use offline fixtures. Reports drift without modifying labels. |
 | Issue triage | Audits open issues on issue events or manual runs. Reports missing assignee, priority, milestone, dependency section, invalid labels, and inconsistent blocked status. |
+| Dependabot (`.github/dependabot.yml`) | Opens a weekly grouped pull request for SHA-pinned GitHub Actions, labelled `ci` and `P3` and assigned to me. Nothing merges automatically. |
 
 Only synchronization has `issues: write`. PR validation is read-only. Actions are pinned to full commit SHAs.
 
@@ -18,7 +19,7 @@ Only synchronization has `issues: write`. PR validation is read-only. Actions ar
 
 1. Enable Actions and run **Sync issue labels** from the default branch. GitHub template creation copies files; run synchronization to establish the live labels.
 2. To add labels for a generated repository, such as one per regulatory regime, add them to the `labels` list in `.github/labels.json`, sorted case-insensitively by name, and update the label counts in the documentation. **Repository integrity** checks both.
-3. My GitHub account, `danielep71`, is the assignee in the three issue forms (`assignees`); the triage check reads it from `bug.yml`. If someone else maintains a generated repository, replace my account in the three forms.
+3. My GitHub account, `danielep71`, is the assignee in the three issue forms (`assignees`) and in `.github/dependabot.yml`; the triage check reads it from `bug.yml`. If someone else maintains a generated repository, replace my account in those four files. **Repository integrity** fails if they disagree.
 4. Create project milestones, give each open issue exactly one priority and a milestone, and assign it to me (or the account configured for a generated repository). Use `blocked` only for a named open prerequisite or `External condition:`. P1 is reserved for confirmed calculation bugs.
 5. Label validation covers pull requests to every branch. Live synchronization runs only on the current default branch, including after a rename.
 
