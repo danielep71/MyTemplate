@@ -236,6 +236,24 @@ class MainTests(unittest.TestCase):
             self.assertEqual([f["rule"] for f in report["findings"]], ["milestone"])
             self.assertIn("open issues audited: 1", stdout.getvalue())
 
+    def test_live_mode_reads_every_page_and_refuses_partial_lists(self) -> None:
+        def item(number: int) -> dict[str, object]:
+            return {"number": number, "state": "open", "labels": [], "assignees": [],
+                    "milestone": None, "body": ""}
+
+        pages = {1: [item(n) for n in range(1, 101)], 2: [item(101)]}
+        with unittest.mock.patch.object(
+                check_issues, "fetch",
+                side_effect=lambda url, token: pages[int(url.rsplit("page=", 1)[1])]) as fetch:
+            issues, states, pulls = check_issues.load_live("o/r", "token")
+        self.assertEqual(len(issues), 101)
+        self.assertEqual(fetch.call_count, 2)
+        with unittest.mock.patch.object(check_issues, "fetch",
+                                        return_value=[item(1)] * 100) as fetch, \
+                self.assertRaisesRegex(RuntimeError, "10000 or more issues"):
+            check_issues.load_live("o/r", "token")
+        self.assertEqual(fetch.call_count, 100)
+
     def test_offline_mode_requires_explicit_repository(self) -> None:
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:
             check_issues.parse_args(["--input", "issues.json"])

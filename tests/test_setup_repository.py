@@ -108,6 +108,25 @@ class SetupTests(unittest.TestCase):
             self.run_setup()
         self.assertEqual(self.api.writes, [])
 
+    def test_disabled_merge_methods_block_all_writes(self):
+        self.args.apply = True
+        for setting, message in (('allow_merge_commit', 'Merge commits'),
+                                 ('allow_squash_merge', 'Squash merging')):
+            with self.subTest(setting=setting):
+                self.api = FakeAPI()
+                self.api.repo[setting] = False
+                with self.assertRaisesRegex(setup.SetupError, message):
+                    self.run_setup()
+                self.assertEqual(self.api.writes, [])
+
+    def test_missing_reraises_errors_other_than_404(self):
+        def forbidden(method, endpoint, payload=None):
+            raise setup.SetupError(f'{method} {endpoint} failed (HTTP 403). Check gh authentication.')
+        with self.assertRaisesRegex(setup.SetupError, 'HTTP 403'):
+            setup.missing(forbidden, 'repos/a/b/vulnerability-alerts')
+        self.assertEqual(setup.missing(lambda method, endpoint: self.api.not_found(endpoint),
+                                       'repos/a/b/x'), (None, True))
+
     def test_non_admin_blocks_all_writes(self):
         self.args.apply = True
         self.api.repo['permissions']['admin'] = False

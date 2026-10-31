@@ -154,10 +154,15 @@ def local_error(root: Path, source: Path, link: str, anchors: dict[Path, set[str
 
 def check(root: Path = ROOT) -> tuple[list[str], set[str], int]:
     """Return (errors, external URLs, number of links checked) for the Markdown files."""
-    documents = {path.resolve(): markdown_links(path.read_text(encoding="utf-8"))
-                 for path in tracked_markdown(root)}
-    anchors = {path: found for path, (_, found) in documents.items()}
     errors: list[str] = []
+    documents = {}
+    for path in tracked_markdown(root):
+        if not path.is_file():
+            # Tracked by Git but deleted from the working tree without git rm.
+            errors.append(f"{path.relative_to(root).as_posix()}: tracked but missing from the working tree")
+            continue
+        documents[path.resolve()] = markdown_links(path.read_text(encoding="utf-8"))
+    anchors = {path: found for path, (_, found) in documents.items()}
     external: set[str] = set()
     count = 0
     for source, (links, _) in sorted(documents.items()):

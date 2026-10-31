@@ -17,8 +17,10 @@ on:
 
 permissions: {}
 
+# One group per pull request: a group keeps only one pending run, so a
+# shared group would cancel the events of other pull requests.
 concurrency:
-  group: pr-milestones
+  group: pr-milestones-${{ github.event.pull_request.number || 'scan' }}
   cancel-in-progress: false
 
 jobs:
