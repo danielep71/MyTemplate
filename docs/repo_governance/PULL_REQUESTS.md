@@ -31,6 +31,34 @@ instead of reviewing. Before merging a pull request I authored:
 If the review fails, is unavailable or does not finish, I leave the pull
 request open and record what blocks it.
 
+## 🌿 Release branches
+
+While a release branch such as `release/1.2.0` is active, the work for that
+release reaches the default branch through it. Without one, task pull requests
+target the default branch directly and the integration and sync steps do not
+apply.
+
+| Pull request | Base ← head | Issue links | Merge method |
+| --- | --- | --- | --- |
+| Task | release branch ← task branch created from it | `Resolves #N` | merge commit or squash |
+| Integration | default branch ← release branch | `Refs #` for the issues and pull requests it carries | merge commit |
+| Sync | release branch ← default branch | `Refs #` for the integration pull request | merge commit |
+
+- GitHub closes an issue from a keyword only when the pull request merges into
+  the default branch. After a task pull request merges into the release branch,
+  close its issue by hand with the *Resolution* that
+  [ISSUE_LABELS.md](ISSUE_LABELS.md#-closing-issues) requires.
+- An integration pull request uses `Refs #`, never a closing keyword: a keyword
+  there would close every named issue, including one whose acceptance criteria
+  still wait for evidence.
+- Open the sync pull request right after each integration. It brings the
+  integration's merge commit back, changes no file, and lets the next task
+  branch start from the same history as the default branch.
+- Integration and sync pull requests follow the final-head review above, like
+  any other pull request.
+- `.github/dependabot.yml` names the active release branch in `target-branch`.
+  Update it when a new release branch opens, or remove it when none is active.
+
 ## ⚖️ Recorded exceptions
 
 Record these in the *Final-head review* section, in place of the steps above,
