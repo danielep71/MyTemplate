@@ -5,7 +5,6 @@ The parser is pinned in .github/requirements.txt; install it with
 are skipped locally and fail in GitHub Actions.
 """
 
-import json
 import os
 import re
 from pathlib import Path
@@ -19,6 +18,7 @@ except ImportError:  # pragma: no cover - exercised only without the parser
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / '.github/workflows'
 REQUIRED_JOB = ('repository-integrity.yml', 'repository-integrity')
+REQUIRED_CHECK = 'Repository integrity'
 # The only jobs that may write, and what each may write.
 WRITE_PERMISSIONS = {
     ('labels-sync.yml', 'reconcile'): {'issues'},
@@ -90,11 +90,9 @@ class WorkflowControlTests(unittest.TestCase):
         job = document['jobs'][job_id]
         self.assertNotIn('if', job)
         self.assertNotIn('strategy', job)
-        settings = json.loads((ROOT / 'docs/setup/repository-settings.json').read_text(encoding='utf-8'))
-        contexts = {check['context'] for ruleset in settings['rulesets'] for rule in ruleset['rules']
-                    if rule['type'] == 'required_status_checks'
-                    for check in rule['parameters']['required_status_checks']}
-        self.assertEqual(contexts, {job['name']})
+        # The rulesets require this name; tests/test_setup_repository.py checks the
+        # settings file against it while the setup tooling is kept.
+        self.assertEqual(job['name'], REQUIRED_CHECK)
 
     def test_live_label_reconciliation_runs_only_on_the_default_branch(self):
         condition = workflows()['labels-sync.yml']['jobs']['reconcile']['if']
