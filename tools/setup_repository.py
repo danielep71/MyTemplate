@@ -68,8 +68,11 @@ def rule_spec(rule):
 
 def load_config(path):
     value = json.loads(path.read_text(encoding='utf-8'))
-    if set(value) != {'schema_version', 'repository', 'rulesets'} or value['schema_version'] != 1:
+    if (set(value) != {'schema_version', 'repository', 'private_vulnerability_reporting', 'rulesets'}
+            or value['schema_version'] != 2):
         raise SetupError('Unsupported configuration schema.')
+    if type(value['private_vulnerability_reporting']) is not bool:
+        raise SetupError('private_vulnerability_reporting must be a boolean.')
     if set(value['repository']) != GENERAL_KEYS or any(type(v) is not bool for v in value['repository'].values()):
         raise SetupError('Configuration must contain exactly the four documented boolean repository settings.')
     names = []
@@ -111,11 +114,26 @@ def inspect(call, repo, config, report=True):
             actual = call('GET', endpoint)
             if rule_spec(actual) != rule_spec(desired):
                 plan.append(('PUT', endpoint, desired))
+    plan += vulnerability_reporting_plan(call, root, metadata, config, report)
     changes = {k: v for k, v in config['repository'].items() if metadata.get(k) != v}
     # Install protection first, then enable branch cleanup.
     if changes:
         plan.append(('PATCH', root, changes))
     return metadata, plan
+
+
+def vulnerability_reporting_plan(call, root, metadata, config, report):
+    """GitHub offers private vulnerability reporting only on public repositories."""
+    desired = config['private_vulnerability_reporting']
+    endpoint = root + '/private-vulnerability-reporting'
+    if metadata.get('visibility') != 'public':
+        if desired and report:
+            print(f'NOTE: private vulnerability reporting is available only for public repositories; '
+                  f'it is not applied while the destination is {metadata.get("visibility")}. '
+                  'Rerun the check after making the repository public.')
+        return []
+    enabled = bool((call('GET', endpoint) or {}).get('enabled'))
+    return [] if enabled == desired else [('PUT' if desired else 'DELETE', endpoint, None)]
 
 
 def report_unmanaged(call, root, current, config):
@@ -161,14 +179,16 @@ def run(args, call=api):
         print('VERIFIED: all documented settings match. Unmanaged settings are outside this verification.')
         return 0
     for method, endpoint, payload in plan:
-        print(f'{method} {endpoint}\n{json.dumps(payload, indent=2)}')
+        print(f'{method} {endpoint}')
+        if payload is not None:
+            print(json.dumps(payload, indent=2))
     if args.check:
         print('DRIFT: documented settings do not match.')
         return 1
     if not args.apply:
         print('PREVIEW ONLY: no changes made. Use --apply to execute this plan.')
         return 0
-    if any(method == 'PUT' for method, _, _ in plan) and not args.update_existing:
+    if any(method == 'PUT' and '/rulesets/' in endpoint for method, endpoint, _ in plan) and not args.update_existing:
         raise SetupError('A named ruleset differs. Review the preview, then use --update-existing '
                          'to replace that entire named ruleset. Additional rules in it will be removed.')
     check_prerequisites(call, args.repo, metadata, config)

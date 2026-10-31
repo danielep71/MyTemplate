@@ -37,9 +37,11 @@ in the [setup guide](../setup/REPOSITORY_SETUP.md), not in this portable file. C
 | Always suggest updating PR branches | Off (`allow_update_branch: false`) | **On** | Offers updates even without a freshness requirement; local governance still governs use on shared integration branches. |
 | Repository Projects feature | On (`has_projects: true`) | **Off** | Disables the repository feature; this does not describe account-level project boards. Organization defaults may differ. |
 | Legacy downloads flag | On (`has_downloads: true`) | **Off** | API metadata difference; not a prohibition on release assets or source downloads. |
+| Private vulnerability reporting | Off | **On** (public repositories only) | Adds **Security → Report a vulnerability**, the private channel that `SECURITY.md` names. GitHub offers it only on public repositories; organization defaults may differ. |
 
-Source: GitHub's [repository REST documentation][repo-api]. These values are
-configuration differences, not blanket recommendations for every project.
+Sources: GitHub's [repository REST documentation][repo-api] and
+[private vulnerability reporting][pvr]. These values are configuration
+differences, not blanket recommendations for every project.
 
 <a id="rulesets"></a>
 
@@ -106,11 +108,13 @@ reports on every relevant PR before adopting these rules.
 | Reference | Supports |
 | --- | --- |
 | [Repository REST API][repo-api] | Declared option defaults and parameter meanings |
+| [Private vulnerability reporting][pvr] | Availability on public repositories and how the setting is enabled |
 | [Creating rulesets][ruleset-create] | Custom targets, bypass configuration and activation; the editor initially uses Disabled enforcement |
 | [Available rules][ruleset-rules] | Meaning of selected protection rules, including editor defaults |
 | [Security configuration defaults][security-defaults] | Why organization-applied defaults must be distinguished from a standalone baseline |
 
 [repo-api]: https://docs.github.com/en/rest/repos/repos
+[pvr]: https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configure-for-a-repository
 [ruleset-create]: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository
 [ruleset-rules]: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets
 [security-defaults]: https://docs.github.com/en/enterprise-cloud@latest/code-security/how-tos/secure-at-scale/configure-enterprise-security/establish-complete-coverage/create-custom-configuration
@@ -123,8 +127,10 @@ reports on every relevant PR before adopting these rules.
 
 The executable configuration is [repository-settings.json](../setup/repository-settings.json).
 See [REPOSITORY_SETUP.md](../setup/REPOSITORY_SETUP.md) for preview, apply and verification commands.
-The script covers the four general differences and five rulesets documented above;
-it does not configure the security features excluded from this reference.
+The script covers the five general differences and five rulesets documented above.
+It enables private vulnerability reporting only on a public destination and says
+so for any other visibility. It does not configure the security features excluded
+from this reference.
 `Protect main` targets `~DEFAULT_BRANCH`, so it follows the default branch under
 any name. The script matches rulesets by name: renaming one in the configuration
 creates a new ruleset and leaves the old one in place.

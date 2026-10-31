@@ -11,6 +11,7 @@ Ongoing repository rules and maintenance guidance live here. One-time initializa
 | [🏷️ Issue labels](ISSUE_LABELS.md) | Label catalogue, synchronization, drift detection, and issue triage. |
 | [🚀 Repository setup](../setup/REPOSITORY_SETUP.md) | Preview, apply, verify, and hand over a newly generated repository. |
 | [📋 Settings configuration](../setup/repository-settings.json) | Machine-readable baseline used by the setup script. |
+| [🔒 Security policy](../../SECURITY.md) | Private vulnerability reporting, response targets, and scope. |
 
 ## Repository controls
 

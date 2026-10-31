@@ -4,7 +4,7 @@
 
 **From template files to a configured GitHub repository**
 
-[![Scope](https://img.shields.io/badge/Scope-4_settings_%C2%B7_5_rulesets-00338D?style=flat-square)](#-what-this-applies)
+[![Scope](https://img.shields.io/badge/Scope-5_settings_%C2%B7_5_rulesets-00338D?style=flat-square)](#-what-this-applies)
 [![Mode](https://img.shields.io/badge/Default-Preview_only-005EB8?style=flat-square)](#-launch-sequence)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](#-before-you-start)
 [![Verification](https://img.shields.io/badge/Verification-Read_back_after_apply-00875A?style=flat-square)](#-verification-and-recovery)
@@ -105,7 +105,7 @@ of the [settings reference](../repo_governance/SETTINGS.md).
 
 | Layer | Managed configuration |
 | --- | --- |
-| **General · 4 settings** | Delete merged head branches; suggest PR branch updates; disable Projects; disable the legacy downloads flag. |
+| **General · 5 settings** | Delete merged head branches; suggest PR branch updates; disable Projects; disable the legacy downloads flag; enable private vulnerability reporting on a public repository (skipped with a note otherwise). |
 | **Protection · 5 rulesets** | Default branch, release branches, independent release-branch deletion protection, release tags, and traffic history. |
 | **Enforcement** | Active rulesets with no bypass actors or ref exclusions. `Protect main` targets `~DEFAULT_BRANCH`, not a fixed branch name. |
 | **Verification** | All pages are read; full rule definitions are compared without response metadata; managed settings are read back after apply. |
@@ -128,6 +128,7 @@ inherited policies may impose additional restrictions.
 | File or setting | Action in the new repository | Reason / dependency |
 | --- | --- | --- |
 | `AGENTS.md` | **Adapt** | Delete the template-only section first; keep the remaining instructions that still apply to the project. |
+| `SECURITY.md` | **Keep and adapt** | Names the private reporting channel and response targets. Adjust supported versions and scope to the project. |
 | `README.md` | **Adapt** | Replace the MyTemplate title and introduction with the project's purpose, installation and usage. Keep or replace setup links deliberately. |
 | `LICENSE` | **Keep or replace** | MPL-2.0 by default. The integrity workflow requires a non-empty `LICENSE`. |
 | `docs/licenses/` | **Keep** | Notice and license text for the files listed in `THIRD_PARTY_NOTICES.txt`, which remain under MPL-2.0 whatever license you choose. |

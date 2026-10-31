@@ -22,8 +22,15 @@ class FakeAPI:
         self.writes = []
         self.green = True
         self.ignore_patch = False
+        self.reporting = False
 
     def __call__(self, method, endpoint, payload=None):
+        if endpoint.endswith('/private-vulnerability-reporting'):
+            if method == 'GET':
+                return {'enabled': self.reporting}
+            self.writes.append((method, endpoint, payload))
+            self.reporting = method == 'PUT'
+            return None
         if method != 'GET':
             self.writes.append((method, endpoint, copy.deepcopy(payload)))
             if method == 'POST':
@@ -114,6 +121,33 @@ class SetupTests(unittest.TestCase):
             self.assertEqual(setup.run(self.args, self.api), 0)
         self.assertIn('unmanaged ruleset "main" (branch: ~DEFAULT_BRANCH; active)', output.getvalue())
         self.assertEqual(self.api.writes, [])
+
+    def test_public_repository_enables_vulnerability_reporting_once(self):
+        self.api.repo['visibility'] = 'public'
+        self.args.apply = True
+        self.assertEqual(self.run_setup(), 0)
+        self.assertIn(('PUT', 'repos/example/project/private-vulnerability-reporting', None),
+                      self.api.writes)
+        self.assertEqual(self.api.writes[-1][0], 'PATCH')
+        self.api.writes.clear()
+        self.assertEqual(self.run_setup(), 0)
+        self.assertEqual(self.api.writes, [])
+
+    def test_private_repository_skips_vulnerability_reporting_with_a_note(self):
+        self.args.apply = True
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(setup.run(self.args, self.api), 0)
+        self.assertIn('available only for public repositories', output.getvalue())
+        self.assertFalse(any('vulnerability' in endpoint for _, endpoint, _ in self.api.writes))
+
+    def test_check_reports_disabled_vulnerability_reporting_as_drift(self):
+        self.api.repo['visibility'] = 'public'
+        self.args.apply = True
+        self.run_setup()
+        self.api.reporting = False
+        self.args.apply, self.args.check = False, True
+        self.assertEqual(self.run_setup(), 1)
 
     def test_duplicate_names_rejected_before_writes(self):
         name = setup.load_config(setup.CONFIG)['rulesets'][0]['name']

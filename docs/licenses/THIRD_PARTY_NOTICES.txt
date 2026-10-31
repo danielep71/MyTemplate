@@ -16,6 +16,7 @@ The following files were imported or adapted from danielep71/K-SFTs
 .github/workflows/labels-sync.yml
 .github/workflows/labels-drift.yml
 .github/workflows/issue-triage.yml
+SECURITY.md
 tools/check_issues.py
 tests/test_check_issues.py
 
