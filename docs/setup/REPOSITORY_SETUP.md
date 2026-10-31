@@ -4,7 +4,7 @@
 
 **From template files to a configured GitHub repository**
 
-[![Scope](https://img.shields.io/badge/Scope-5_settings_%C2%B7_5_rulesets-00338D?style=flat-square)](#-what-this-applies)
+[![Scope](https://img.shields.io/badge/Scope-4_settings_%C2%B7_5_security_features_%C2%B7_5_rulesets-00338D?style=flat-square)](#-what-this-applies)
 [![Mode](https://img.shields.io/badge/Default-Preview_only-005EB8?style=flat-square)](#-launch-sequence)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](#-before-you-start)
 [![Verification](https://img.shields.io/badge/Verification-Read_back_after_apply-00875A?style=flat-square)](#-verification-and-recovery)
@@ -105,13 +105,13 @@ of the [settings reference](../repo_governance/SETTINGS.md).
 
 | Layer | Managed configuration |
 | --- | --- |
-| **General · 5 settings** | Delete merged head branches; suggest PR branch updates; disable Projects; disable the legacy downloads flag; enable private vulnerability reporting on a public repository (skipped with a note otherwise). |
+| **General · 4 settings** | Delete merged head branches; suggest PR branch updates; disable Projects; disable the legacy downloads flag. |
+| **Security · 5 features** | Dependabot alerts and security updates on every repository; private vulnerability reporting, secret scanning and push protection on a public repository (skipped with a note otherwise). |
 | **Protection · 5 rulesets** | Default branch, release branches, independent release-branch deletion protection, release tags, and traffic history. |
 | **Enforcement** | Active rulesets with no bypass actors or ref exclusions. `Protect main` targets `~DEFAULT_BRANCH`, not a fixed branch name. |
 | **Verification** | All pages are read; full rule definitions are compared without response metadata; managed settings are read back after apply. |
 
-**Outside this baseline:** visibility, template mode, security switches (Dependabot
-alerts and security updates, CodeQL, Secret Protection), Actions policy, Pages, secrets, environments, labels,
+**Outside this baseline:** visibility, template mode, CodeQL and other code scanning, Actions policy, Pages, secrets, environments, labels,
 collaborators and integrations. Configure these separately where required.
 The script creates no branches, tags, releases or PRs. Destination defaults and
 inherited policies may impose additional restrictions.
