@@ -129,14 +129,55 @@ class MergeTests(unittest.TestCase):
             self.assertEqual(daily["2026-10-08"][2], "2026-10-14T06:00:00Z")
             self.assertEqual(len(ws.rows(SNAPSHOTS)), 2)
 
-    def test_repeated_run_changes_nothing(self) -> None:
+    def test_merging_the_same_collection_again_changes_nothing(self) -> None:
         with workspace() as ws:
             ws.collect(window("2026-10-14", [(2, 1)] * 14))
             ws.merge("2026-10-14T06:00:00")
             before = ws.snapshot()
-            report = ws.merge("2026-10-14T09:30:00")
+            report = ws.merge("2026-10-14T06:00:00")
             self.assertEqual(report.changed, {})
             self.assertEqual(ws.snapshot(), before)
+
+    def test_a_newer_identical_collection_records_only_its_observation(self) -> None:
+        with workspace() as ws:
+            ws.collect(window("2026-10-14", [(2, 1)] * 14))
+            ws.merge("2026-10-14T06:00:00")
+            before = {name: ws.rows(name) for name in (DAILY, SNAPSHOTS, REFERRERS, PATHS)}
+            report = ws.merge("2026-10-14T09:30:00")
+            self.assertEqual(sorted(report.changed), [DAILY, SNAPSHOTS])
+            observed = {"views_observed_at", "clones_observed_at", "observed_at"}
+            for name, rows in before.items():
+                after = ws.rows(name)
+                self.assertEqual([{k: v for k, v in row.items() if k not in observed} for row in after],
+                                 [{k: v for k, v in row.items() if k not in observed} for row in rows])
+            self.assertEqual({row["views_observed_at"] for row in ws.rows(DAILY)},
+                             {"2026-10-14T09:30:00Z"})
+            self.assertEqual(ws.rows(SNAPSHOTS)[0]["observed_at"], "2026-10-14T09:30:00Z")
+            self.assertEqual(ws.rows(SNAPSHOTS)[0]["collected_at"], "2026-10-14T06:00:00Z")
+
+    def test_older_collection_replayed_after_an_unchanged_newer_one_keeps_its_values(self) -> None:
+        with workspace() as ws:
+            ws.collect(window("2026-10-14", [(1, 1)] * 13 + [(10, 3)]))
+            ws.merge("2026-10-14T06:00:00")
+            ws.merge("2026-10-14T18:00:00")  # the same counts, observed again
+            ws.raw.rename(ws.raw.parent / "noon")
+            ws.raw.mkdir()
+            ws.collect(window("2026-10-14", [(1, 1)] * 13 + [(5, 2)]),
+                       referrers=[{"referrer": "example.org", "count": 5, "uniques": 2}])
+            before = ws.snapshot()
+            report = traffic_history.merge(ws.raw, ws.data, at("2026-10-14T12:00:00"))
+            self.assertEqual(report.changed, {})
+            self.assertEqual(ws.snapshot(), before)
+            self.assertEqual(ws.daily()["2026-10-14"], ("10", "10", "2026-10-14T06:00:00Z"))
+            self.assertEqual(ws.rows(REFERRERS)[0]["referrer"], "github.com")
+
+    def test_the_newest_observation_wins_even_with_lower_counts(self) -> None:
+        with workspace() as ws:
+            ws.collect(window("2026-10-14", [(1, 1)] * 13 + [(10, 3)]))
+            ws.merge("2026-10-14T06:00:00")
+            ws.collect(window("2026-10-14", [(1, 1)] * 13 + [(5, 2)]))
+            ws.merge("2026-10-14T18:00:00")
+            self.assertEqual(ws.daily()["2026-10-14"], ("5", "5", "2026-10-14T18:00:00Z"))
 
     def test_same_day_run_with_new_values_replaces_that_day_only(self) -> None:
         with workspace() as ws:
@@ -263,9 +304,24 @@ class RepositoryCountTests(unittest.TestCase):
             ws.merge("2026-10-14T06:00:00")
             old, new = ws.rows(SNAPSHOTS)
             self.assertEqual((old["views_14d"], old["stars"], old["open_issues"]), ("7", "", ""))
+            self.assertEqual(old["observed_at"], old["collected_at"])
             self.assertEqual(new["stars"], "1")
             self.assertEqual((ws.data / SNAPSHOTS).read_text(encoding="utf-8").splitlines()[0],
                              ",".join(traffic_history.HEADERS[SNAPSHOTS]))
+
+    def test_legacy_daily_rows_take_their_observation_time_from_the_change_time(self) -> None:
+        legacy = ("date,views,unique_views,views_collected_at,clones,unique_clones,clones_collected_at\n"
+                  "2026-09-30,4,2,2026-10-13T06:00:00Z,1,1,2026-10-13T06:00:00Z\n")
+        with workspace() as ws:
+            ws.data.mkdir()
+            (ws.data / DAILY).write_text(legacy, encoding="utf-8")
+            ws.collect(window("2026-10-14", [(1, 1)] * 14))
+            ws.merge("2026-10-14T06:00:00")
+            old = next(row for row in ws.rows(DAILY) if row["date"] == "2026-09-30")
+            self.assertEqual((old["views"], old["views_observed_at"], old["clones_observed_at"]),
+                             ("4", "2026-10-13T06:00:00Z", "2026-10-13T06:00:00Z"))
+            self.assertEqual((ws.data / DAILY).read_text(encoding="utf-8").splitlines()[0],
+                             ",".join(traffic_history.HEADERS[DAILY]))
 
     def test_invalid_repository_response_is_refused(self) -> None:
         for body, message in [([], "repository: expected an object"),
@@ -303,8 +359,10 @@ class BadgeTests(unittest.TestCase):
             ws.merge("2026-10-14T06:00:00")
             (ws.data / "badges" / "visits.json").unlink()
             report = ws.merge("2026-10-14T09:00:00")
-            self.assertEqual(report.changed, {"badges/visits.json": 1})
-            self.assertEqual(ws.merge("2026-10-14T12:00:00").changed, {})
+            self.assertEqual({name for name in report.changed if name.startswith("badges/")},
+                             {"badges/visits.json"})
+            report = ws.merge("2026-10-14T12:00:00")
+            self.assertEqual([name for name in report.changed if name.startswith("badges/")], [])
 
     def test_compact_numbers(self) -> None:
         self.assertEqual([traffic_history.compact(value)
@@ -426,15 +484,19 @@ class FailureTests(unittest.TestCase):
     def test_corrupt_history_file_is_never_overwritten(self) -> None:
         for content, message in [("date,views\n2026-10-01,1\n", "header"),
                                  (traffic_history.render(DAILY, [])
-                                  + "2026-10-01,x,1,2026-10-01T06:00:00Z,1,1,2026-10-01T06:00:00Z\n", "non-numeric"),
+                                  + "2026-10-01,x,1,2026-10-01T06:00:00Z,2026-10-01T06:00:00Z,1,1,"
+                                  "2026-10-01T06:00:00Z,2026-10-01T06:00:00Z\n", "non-numeric"),
                                  (traffic_history.render(DAILY, [])
-                                  + "yesterday,1,1,2026-10-01T06:00:00Z,1,1,2026-10-01T06:00:00Z\n", "invalid date"),
+                                  + "yesterday,1,1,2026-10-01T06:00:00Z,2026-10-01T06:00:00Z,1,1,"
+                                  "2026-10-01T06:00:00Z,2026-10-01T06:00:00Z\n", "invalid date"),
                                  (traffic_history.render(DAILY, []) + "2026-10-01,1\n",
                                   "number of fields"),
                                  (traffic_history.render(DAILY, [])
-                                  + "2026-10-01,1,1,t,1,1,2026-10-01T06:00:00Z\n", "invalid views_collected_at"),
+                                  + "2026-10-01,1,1,t,2026-10-01T06:00:00Z,1,1,2026-10-01T06:00:00Z,"
+                                  "2026-10-01T06:00:00Z\n", "invalid views_collected_at"),
                                  (traffic_history.render(DAILY, [])
-                                  + "2026-10-01,1,,,1,1,2026-10-01T06:00:00Z\n", "non-numeric unique_views")]:
+                                  + "2026-10-01,1,,,,1,1,2026-10-01T06:00:00Z,2026-10-01T06:00:00Z\n",
+                                  "non-numeric unique_views")]:
             with self.subTest(message=message), workspace() as ws:
                 ws.data.mkdir()
                 (ws.data / DAILY).write_text(content, encoding="utf-8")

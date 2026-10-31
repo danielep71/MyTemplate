@@ -73,8 +73,8 @@ The `traffic-history` branch holds these files under `data/`:
 
 | File | Key | Contents |
 | --- | --- | --- |
-| `daily.csv` | `date` | Views and unique views, clones and unique clones per UTC day. `views_collected_at` and `clones_collected_at` give the collection that last changed each pair. |
-| `snapshots.csv` | `snapshot_date` | One row per collection day: the first and last day the API reported, the 14-day totals, the repository's `stars`, `forks`, `watchers` and `open_issues` at collection time, and `collected_at`, the collection that last changed that day's snapshot, referrers or paths. |
+| `daily.csv` | `date` | Views and unique views, clones and unique clones per UTC day. For each pair, `*_collected_at` gives the collection that last changed it and `*_observed_at` the newest collection that reported it. |
+| `snapshots.csv` | `snapshot_date` | One row per collection day: the first and last day the API reported, the 14-day totals, the repository's `stars`, `forks`, `watchers` and `open_issues` at collection time, `collected_at`, the collection that last changed that day's snapshot, referrers or paths, and `observed_at`, the newest collection of that day. |
 | `referrers.csv` | `snapshot_date`, `rank` | The top 10 referrers over the 14 days before each collection. |
 | `paths.csv` | `snapshot_date`, `rank` | The top 10 repository paths over the same window. |
 | `badges/*.json` | — | Badge files, rewritten from the stored data after each merge (*Badges* below). |
@@ -100,27 +100,30 @@ value does.
 
 ### Merge rules
 
-`tools/traffic_history.py` merges each collection idempotently:
+`tools/traffic_history.py` merges each collection idempotently: merging the
+same collection again changes nothing.
 
 - **Overlapping windows:** for every date the collection reports, its values
   replace the stored ones, so a day that was incomplete when first collected
   is corrected later. Views and clones are merged separately, each with its
-  own collection time.
+  own collection and observation times.
 - **Older history:** dates the collection does not report keep their values.
   Nothing is deleted.
 - **No double counting:** values are replaced, never added. Unique counts are
   never summed across days or windows; a 14-day unique count exists only in
   `snapshots.csv`.
 - **Same-day runs:** a collection day's snapshot, referrers and paths are one
-  unit, replaced only if any of the three changed. Running the workflow twice
-  with the same data changes nothing.
-- **Order:** each metric keeps the time of the collection that last
-  *changed* it, not of the latest one that reported it. An older collection
-  merged after a newer one therefore leaves the newer values in place only
-  while a date's counts never decrease between collections. If they do, the
-  older collection can overwrite them. The workflow merges only the collection
-  it has just fetched, so this can happen only when an old saved collection
-  is merged by hand: never do that.
+  unit, replaced only if any of the three changed. A newer collection with the
+  same data changes no value or collection time; it records only its
+  observation time, so each successful run adds a commit to the branch.
+- **Order:** the newest collection that reported a value wins, even when it
+  left the value unchanged or reported a lower count. An older collection
+  merged after a newer one, for example when a saved collection is replayed,
+  never replaces what the newer one reported; it can only fill a date or
+  metric that nothing newer reported.
+- **Earlier layouts:** a history file written before the observation times
+  existed is read with each observation time equal to its collection time and
+  rewritten with the current header on the next merge.
 
 ### Zero or unavailable
 
@@ -183,6 +186,5 @@ invalid, and leaves the history unchanged. Read the failing step:
 A failed run can always be repeated: the merge is idempotent, and each
 collection covers the last 14 days. To repair the branch, change it with a new
 commit made with `python tools/traffic_history.py merge` or by hand, keeping
-every header. Merge only a collection fetched for the repair, never an older
-saved one (*Order* above). `python tools/traffic_history.py init --data data` recreates
+every header. `python tools/traffic_history.py init --data data` recreates
 missing files with their headers and never overwrites an existing one.
