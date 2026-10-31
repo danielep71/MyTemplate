@@ -66,6 +66,18 @@ A form sets the default priority; triage confirms or changes it. Raise a bug to 
 | `invalid` | Close the issue: it is incomplete, unsupported, or not actionable as submitted. |
 | `wontfix` | Close the issue: I have decided not to do this work. |
 
+## ✅ Closing issues
+
+Close an issue as completed only when linked evidence meets its acceptance criteria, and check an acceptance box only when that evidence demonstrates it. When the issue is closed, add a **Resolution** section to its body with:
+
+- links to the change (pull request and commit);
+- the checks actually run, with their results;
+- what was not validated, and any accepted limitation.
+
+Close for another reason (duplicate, not planned, or superseded) only with an explicit explanation; the `duplicate`, `invalid`, and `wontfix` rows above say which label applies. Record material scope or policy decisions in the issue, pull request, or commit description.
+
+Pull requests opened by Dependabot or another bot carry the labels of the work and no milestone. During triage, link each one to an existing issue or a new tracking issue, and give that issue the milestone.
+
 ## 🎨 Catalogue
 
 The table below lists the descriptions defined in `.github/labels.json`, which synchronization uses as its source of truth.
