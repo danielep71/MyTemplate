@@ -45,7 +45,7 @@
 #   names in diff hunk headers, configure each clone once:
 #
 #       git config diff.vba.xfuncname \
-#         "^([ \t]*(Public|Private|Friend)?[ \t]*(Static[ \t]+)?(Sub|Function|Property[ \t]+(Get|Let|Set))[ \t]+[A-Za-z_].*)$"
+#         "^([[:blank:]]*(Public|Private|Friend)?[[:blank:]]*(Static[[:blank:]]+)?(Sub|Function|Property[[:blank:]]+(Get|Let|Set))[[:blank:]]+[A-Za-z_].*)$"
 #
 #   The outer capture group is intentional: it returns the complete declaration
 #   rather than only a visibility keyword.
@@ -81,13 +81,17 @@
 #------------------------------------------------------------------------------
 # WINDOWS-NATIVE SCRIPTS
 #------------------------------------------------------------------------------
+# Line-ending conversion needs ASCII or UTF-8 content: Git would corrupt the
+# newline bytes inside UTF-16 text. Save these scripts and INI files as UTF-8
+# (Windows PowerShell 5.1 redirection writes UTF-16; use Out-File -Encoding utf8).
+# Registry exports are UTF-16LE by default, so they are kept byte for byte.
 *.bat   text eol=crlf
 *.cmd   text eol=crlf
 *.ps1   text eol=crlf
 *.psm1  text eol=crlf
 *.psd1  text eol=crlf
 *.vbs   text eol=crlf
-*.reg   text eol=crlf
+*.reg   binary
 *.ini   text eol=crlf
 
 
@@ -254,14 +258,17 @@ docs/methodology/sources/README.md      text eol=lf
 # ARCHIVE HYGIENE
 #------------------------------------------------------------------------------
 # These rules apply to git archive and archive producers that honor Git
-# attributes. Repository plumbing is not part of a consumable source package.
-# Use GitHub's template creation or a clone for a full development checkout;
-# these archive exclusions omit configuration and workflows from source packages.
+# attributes. Repository plumbing is not part of a consumable source package:
+# configuration, workflows, and the tests and tools that depend on them.
+# Use GitHub's template creation or a clone for a full development checkout.
 .gitattributes  export-ignore
 .gitignore      export-ignore
 .editorconfig   export-ignore
 .github         export-ignore
-.github/**      export-ignore
+tests           export-ignore
+tools           export-ignore
+pyproject.toml  export-ignore
+AGENTS.md       export-ignore
 
 
 #==============================================================================

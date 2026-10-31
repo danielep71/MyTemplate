@@ -140,8 +140,9 @@ trim_trailing_whitespace = true
 #------------------------------------------------------------------------------
 # WINDOWS-NATIVE SCRIPTS / HOST-SENSITIVE TEXT
 #------------------------------------------------------------------------------
-# Do not force an encoding: some Windows-native formats remain host-specific.
-[*.{bat,cmd,ps1,psm1,psd1,vbs,reg,ini}]
+# Save these as ASCII or UTF-8: Git converts their line endings, which would
+# corrupt UTF-16 text. Registry exports (*.reg) are UTF-16 and binary in Git.
+[*.{bat,cmd,ps1,psm1,psd1,vbs,ini}]
 end_of_line = crlf
 insert_final_newline = true
 trim_trailing_whitespace = true
