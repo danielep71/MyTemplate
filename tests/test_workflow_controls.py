@@ -99,6 +99,29 @@ class WorkflowControlTests(unittest.TestCase):
         self.assertIn("github.event_name != 'pull_request'", condition)
         self.assertIn('github.event.repository.default_branch', condition)
 
+    def test_traffic_app_credentials_stay_in_their_steps(self):
+        jobs = workflows()['traffic-history.yml']['jobs']
+        steps = jobs['collect']['steps']
+        with_key = [step for step in steps if 'TRAFFIC_APP_PRIVATE_KEY' in str(step)]
+        self.assertEqual([step['name'] for step in with_key],
+                         ['Check the traffic App configuration', 'Create the traffic App token'])
+        # The configuration check sees only whether the key is set.
+        self.assertEqual(with_key[0]['env']['HAS_KEY'],
+                         "${{ secrets.TRAFFIC_APP_PRIVATE_KEY != '' }}")
+        token_step = with_key[1]
+        self.assertTrue(token_step['uses'].startswith('actions/create-github-app-token@'))
+        self.assertEqual(token_step['with'], {
+            'client-id': '${{ vars.TRAFFIC_APP_CLIENT_ID }}',
+            'private-key': '${{ secrets.TRAFFIC_APP_PRIVATE_KEY }}',
+            'permission-administration': 'read',
+        })
+        with_token = [step for step in steps if 'steps.app-token.outputs.token' in str(step)]
+        self.assertEqual([step['name'] for step in with_token], ['Fetch traffic from the GitHub API'])
+        self.assertNotRegex(with_token[0]['run'], r'\bpython|\.py\b|source/')
+        alert = jobs['alert']
+        self.assertNotIn('environment', alert)
+        self.assertNotIn('secrets.', str(alert))
+
     def test_milestone_workflow_never_runs_pull_request_code(self):
         document = workflows()['pr-milestones.yml']
         self.assertEqual(set(document['on']), {'push', 'pull_request_target', 'schedule', 'workflow_dispatch'})
