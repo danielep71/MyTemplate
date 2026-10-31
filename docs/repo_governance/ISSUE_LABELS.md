@@ -11,9 +11,10 @@ This repository defines 20 issue labels, each with a name, description, and colo
 | Sync issue labels | Validates pull requests; reconciles labels after a catalogue change lands on the default branch or a manual run on the default branch. Verifies the exact live result. |
 | Detect issue-label drift | Checks daily at 05:17 UTC and manually; PR runs use offline fixtures. Reports drift without modifying labels. |
 | Issue triage | Audits open issues on issue events or manual runs. Reports missing assignee, priority, milestone, dependency section, invalid labels, and inconsistent blocked status. |
-| Dependabot (`.github/dependabot.yml`) | Opens a weekly grouped pull request for SHA-pinned GitHub Actions, labelled `ci` and `P3` and assigned to me. Nothing merges automatically. |
+| Keep milestones issue-only | Removes any milestone set on a pull request, on each pull-request event and in a daily and manual scan of every pull request. It never checks out pull-request code. |
+| Dependabot (`.github/dependabot.yml`) | Opens weekly grouped pull requests for the SHA-pinned GitHub Actions and the pinned configuration parser, labelled `ci` and `P3` and assigned to me. Nothing merges automatically. |
 
-Among these workflows, only synchronization has `issues: write`; outside them, only the optional traffic-alert job does ([TRAFFIC.md](TRAFFIC.md)). PR validation is read-only. Actions are pinned to full commit SHAs.
+Among these workflows, only synchronization has `issues: write` and only *Keep milestones issue-only* has `pull-requests: write`; outside them, only the optional traffic-alert job writes issues ([TRAFFIC.md](TRAFFIC.md)). `tests/test_workflow_controls.py` fails if any other job gains a write permission. PR validation is read-only. Actions are pinned to full commit SHAs.
 
 ## 🚀 New repository
 
@@ -23,11 +24,11 @@ Among these workflows, only synchronization has `issues: write`; outside them, o
 4. Create project milestones, give each open issue exactly one priority and a milestone, and assign it to me (or the account configured for a generated repository). Use `blocked` only for a named open prerequisite or `External condition:`. P1 is reserved for confirmed calculation bugs.
 5. Label validation covers pull requests to every branch. Live synchronization runs only on the current default branch, including after a rename.
 
-**Keep** the label manifest, scripts, all three workflows, issue forms, triage checker/tests, and this guide after bootstrap. They provide ongoing maintenance and must not be deleted with one-time repository setup files.
+**Keep** the label manifest, scripts, all four workflows, issue forms, triage checker/tests, and this guide after bootstrap. They provide ongoing maintenance and must not be deleted with one-time repository setup files.
 
 ## 🧭 Using the labels
 
-Every issue has exactly one priority and the type labels that fit the work. Pull requests carry the labels of the work they deliver; milestones belong to issues only.
+Every issue has exactly one priority and the type labels that fit the work. Pull requests carry the labels of the work they deliver; milestones belong to issues only, and *Keep milestones issue-only* removes any milestone set on a pull request.
 
 ### Priorities
 

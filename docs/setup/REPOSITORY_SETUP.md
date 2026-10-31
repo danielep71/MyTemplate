@@ -145,7 +145,7 @@ inherited policies may impose additional restrictions.
 | `docs/setup/REPOSITORY_SETUP.md` | **Keep or retire after handover** | Optional operational guide; remove links to it if you retire it. |
 | `.github/PULL_REQUEST_TEMPLATE.md` | **Keep and adapt** | Records linked issues, validation, final-head review and what was not validated. Add the project's own checks to *Validated*. |
 | `.github/workflows/traffic-history.yml`, `tools/traffic_history.py`, `tests/test_traffic_history.py`, `docs/repo_governance/TRAFFIC.md` | **Keep; enable if wanted** | Optional traffic collection. It does nothing until you follow *Enabling* in `TRAFFIC.md`. Remove all four together if you never want it. |
-| `.github/dependabot.yml` | **Keep** | Proposes updates to the SHA-pinned Actions. Set `target-branch` if development happens on a release branch. |
+| `.github/dependabot.yml`, `.github/requirements.txt` | **Keep** | Proposes updates to the SHA-pinned Actions and the pinned configuration parser that the workflow control tests use. Set `target-branch` if development happens on a release branch. |
 | `.github/workflows/repository-integrity.yml` | **Keep and evolve** | Supplies the required `Repository integrity` check. Add project-specific checks as the project grows. |
 | GitHub **Template repository** setting | **Review separately** | Choose whether the new project should itself be reusable as a template; the setup script does not change this flag. |
 
@@ -207,13 +207,15 @@ settings, not every GitHub setting or inherited policy.
 ## 🔄 Maintain the baseline
 
 Update the JSON and Markdown together when changing policy, review the preview,
-and run the offline tests before applying it:
+and run the offline tests before applying it. Install the pinned configuration
+parser once; without it the workflow control tests are skipped locally:
 
 ```sh
+python -m pip install -r .github/requirements.txt
 python -m unittest discover -s tests -v
 ```
 
-The tests require neither credentials nor network access. Once setup tooling has
+After that one-time installation, the tests require neither credentials nor network access. Once setup tooling has
 been retired from a generated project, use that project's replacement validation
 and settings-maintenance process instead.
 
