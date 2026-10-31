@@ -117,8 +117,9 @@ of the [settings reference](../repo_governance/SETTINGS.md).
 | **Enforcement** | Active rulesets with no bypass actors or ref exclusions. `Protect main` targets `~DEFAULT_BRANCH`, not a fixed branch name. |
 | **Verification** | All pages are read; full rule definitions are compared without response metadata; managed settings are read back after apply. |
 
-**Outside this baseline:** visibility, template mode, CodeQL and other code scanning, Actions policy, Pages, secrets, environments, labels,
-collaborators and integrations. Configure these separately where required.
+**Outside this baseline:** visibility, template mode, CodeQL and other code
+scanning, Actions policy, Pages, secrets, environments, labels, collaborators
+and integrations. Configure these separately where required.
 The script creates no branches, tags, releases or PRs. Destination defaults and
 inherited policies may impose additional restrictions.
 
@@ -133,6 +134,8 @@ inherited policies may impose additional restrictions.
 
 | File or setting | Action in the new repository | Reason / dependency |
 | --- | --- | --- |
+| `.gitattributes`, `.gitignore`, `.editorconfig` | **Keep** | Line-ending, binary-file, ignore and editor rules for workbooks, exported VBA source and regulatory source copies. Adjust them only with a layout change that needs it. |
+| `.github/labels.json`, `.github/scripts/`, `.github/ISSUE_TEMPLATE/`, the label, triage and milestone workflows, `tools/check_issues.py` | **Keep** | Ongoing label and issue automation; see *Initialize issue labels* above. |
 | `AGENTS.md` | **Adapt** | Delete the template-only section first; keep the remaining instructions that still apply to the project. |
 | `SECURITY.md` | **Keep and adapt** | Names the private reporting channel and response targets. Adjust supported versions and scope to the project. |
 | `README.md` | **Adapt** | Replace the MyTemplate title and introduction with the project's purpose, installation and usage. Keep or replace setup links deliberately. |
@@ -233,6 +236,13 @@ CPython 3.13 for Linux x86_64, the platform the hashes in
 python -m pip install --only-binary=:all: --require-hashes -r tools/requirements-quality-ci.txt
 ruff check tools tests
 mypy
+```
+
+The tests already check every relative link and anchor. To also request the
+external links, as the weekly **Link check** workflow does:
+
+```sh
+python tools/check_links.py --external
 ```
 
 Once setup tooling has been retired from a generated project, use that project's

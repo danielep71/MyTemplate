@@ -22,13 +22,15 @@ Among these workflows, only synchronization has `issues: write` and only *Keep m
 2. To add labels for a generated repository, such as one per regulatory regime, add them to the `labels` list in `.github/labels.json`, sorted case-insensitively by name, then add each one to the catalogue and usage tables below and update the label counts. **Repository integrity** checks all three.
 3. My GitHub account, `danielep71`, is the assignee in the four issue forms (`assignees`) and in `.github/dependabot.yml`; the triage check reads it from `bug.yml`. If someone else maintains a generated repository, replace my account in those five files. **Repository integrity** fails if they disagree.
 4. Create project milestones with due dates, give each open issue exactly one priority, an open milestone, and a target end date before that milestone's due date, and assign it to me (or the account configured for a generated repository). Use `blocked` only for a named open prerequisite or `External condition:`. P1 is reserved for confirmed calculation bugs.
-5. Label validation covers pull requests to every branch. Live synchronization runs only on the current default branch, including after a rename.
+5. Label validation runs on pull requests to any branch that change the label manifest, the synchronization script or its workflow. Live synchronization runs only on the current default branch, including after a rename.
 
 **Keep** the label manifest, scripts, all four workflows, issue forms, triage checker/tests, and this guide after bootstrap. They provide ongoing maintenance and must not be deleted with one-time repository setup files.
 
 ## 🧭 Using the labels
 
 Every issue has exactly one priority and the type labels that fit the work. Pull requests carry the labels of the work they deliver; milestones belong to issues only, and *Keep milestones issue-only* removes any milestone set on a pull request.
+
+Pull requests opened by Dependabot or another bot carry the labels of the work and no milestone. During triage, link each one to an existing issue or a new tracking issue, and give that issue the milestone. Before merging one, record my review of its final diff as [PULL_REQUESTS.md](PULL_REQUESTS.md) describes.
 
 ### Priorities
 
@@ -85,8 +87,6 @@ Close an issue as completed only when linked evidence meets its acceptance crite
 
 Close for another reason (duplicate, not planned, or superseded) only with an explicit explanation; the `duplicate`, `invalid`, and `wontfix` rows above say which label applies. Record material scope or policy decisions in the issue, pull request, or commit description.
 
-Pull requests opened by Dependabot or another bot carry the labels of the work and no milestone. During triage, link each one to an existing issue or a new tracking issue, and give that issue the milestone.
-
 ## 🎨 Catalogue
 
 The table below lists the descriptions defined in `.github/labels.json`, which synchronization uses as its source of truth.
@@ -114,9 +114,15 @@ The table below lists the descriptions defined in `.github/labels.json`, which s
 | `tests` | `#006B75` | Regression coverage, test harnesses, fixtures, or manual validation |
 | `wontfix` | `#6E7781` | I have decided not to implement or continue this work |
 
-## Offline issue audit
+## Local issue audit
 
-Export issues in GitHub REST JSON format, then identify the repository explicitly so dependency URLs resolve correctly. The audit needs Python 3.11+ and Node.js, because it validates the catalogue with the synchronization script:
+The audit needs Python 3.11+ and Node.js, because it validates the catalogue with the synchronization script. To audit the live issues with your GitHub CLI login:
+
+```sh
+GITHUB_TOKEN="$(gh auth token)" python tools/check_issues.py --repository OWNER/REPOSITORY
+```
+
+To audit an export instead, pass a JSON array of issues and pull requests, open and closed, in GitHub REST format, and name the repository explicitly so dependency URLs resolve:
 
 ```sh
 python tools/check_issues.py --input issues.json --repo-name OWNER/REPOSITORY

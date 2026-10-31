@@ -27,25 +27,29 @@ The workflow does nothing until the repository variable `TRAFFIC_HISTORY` is
    ```
 
    `git switch --orphan` starts the branch with no files and no history in
-   common with the default branch. It is never merged
-   and never used as a task base. The setup baseline's **Protect traffic
-   history** ruleset blocks its deletion and force pushes.
+   common with the default branch. It is never merged and never used as a
+   task base. The setup baseline's **Protect traffic history** ruleset blocks
+   its deletion and force pushes.
 2. **Settings → Environments → New environment** `analytics`. Under
    *Deployment branches and tags*, select *Selected branches and tags* and
    allow the default branch only. Do this before adding the App's credentials:
    a run that names a missing environment creates it without that restriction.
 3. **Create the App:** under **Settings → Developer settings → GitHub Apps**
-   of the account that owns the repository, create a GitHub App for this
+   of the account that owns the repository, create a GitHub App for traffic
    collection only. Disable its webhook, grant only the repository permission
    **Administration: Read-only** (GitHub adds *Metadata: Read-only*) and allow
    installation only on this account. The traffic API needs that permission,
-   and the workflow token cannot have it.
-4. **Install the App** on this repository only.
+   and the workflow token cannot have it. If you already have such an App for
+   another repository, reuse it and skip this step.
+4. **Install the App** on this repository: on a new installation select only
+   this repository; on an existing one add this repository to it. Each run's
+   token is limited to the repository it runs in.
 5. In the `analytics` environment, add the App's **Client ID** as the
-   environment variable **TRAFFIC_APP_CLIENT_ID**. Generate a private key and
-   add the whole `.pem` content as the environment secret
-   **TRAFFIC_APP_PRIVATE_KEY**, then delete the downloaded file. Never put the
-   key in a file, issue, comment or chat.
+   environment variable **TRAFFIC_APP_CLIENT_ID**. Generate a private key for
+   this repository (an App can hold several, so one leaked key can be revoked
+   without affecting other repositories) and add the whole `.pem` content as
+   the environment secret **TRAFFIC_APP_PRIVATE_KEY**, then delete the
+   downloaded file. Never put the key in a file, issue, comment or chat.
 6. **Settings → Secrets and variables → Actions → Variables**: add the
    repository variable `TRAFFIC_HISTORY` with the value `enabled`.
 7. Run **Actions → Traffic history → Run workflow** on the default branch and
@@ -75,7 +79,7 @@ the workflow token with `contents: write`.
 Rotate the key if it may have been exposed, or if anyone but me changes the
 workflow:
 
-1. Generate a new private key in the App's settings.
+1. Generate a new private key for this repository in the App's settings.
 2. Replace `TRAFFIC_APP_PRIVATE_KEY` in **Settings → Environments →
    `analytics`**. A repository secret with the same name does not take
    effect: the environment secret takes precedence.
@@ -107,11 +111,11 @@ pull requests.
 
 `data/badges/` holds three files in the shields.io *endpoint* format:
 
-| Badge | Counts |
-| --- | --- |
-| `clones` | Every clone in `daily.csv`, summed since tracking began. |
-| `visitors (14d)` | Unique visitors over the API's 14-day window, from the latest snapshot. Daily unique counts cannot be summed into a unique count. |
-| `visits` | Daily unique visitors summed since tracking began: a visitor counts once per day they visit. |
+| File | Label | Counts |
+| --- | --- | --- |
+| `clones.json` | `clones` | Every clone in `daily.csv`, summed since tracking began. |
+| `visitors.json` | `visitors (14d)` | Unique visitors over the API's 14-day window, from the latest snapshot. Daily unique counts cannot be summed into a unique count. |
+| `visits.json` | `visits` | Daily unique visitors summed since tracking began: a visitor counts once per day they visit. |
 
 On a public repository, a README can show one with
 `https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/OWNER/REPOSITORY/traffic-history/data/badges/clones.json`.
@@ -181,11 +185,12 @@ issue exists, open or closed. The issue is assigned to the issue-form account,
 labelled `P3` and `repository`, filed under the open milestone with the
 earliest due date, and carries a dependency section and a target end date
 (seven days after the snapshot, or the day before the milestone's due date if
-that is earlier), so it passes **Issue triage**. The job needs at least one open milestone with a due date.
+that is earlier), so it passes **Issue triage**. The job needs at least one
+open milestone with a due date.
 
 The job uses the workflow token with `issues: write` and `contents: read`. It
-has no environment, so it never receives the App's key or token, and it runs only
-after a successful collection.
+has no environment, so it never receives the App's key or token, and it runs
+only after a successful collection.
 
 ## 🩺 Failure diagnosis and recovery
 
