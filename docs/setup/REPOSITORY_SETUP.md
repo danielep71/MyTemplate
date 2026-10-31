@@ -6,7 +6,7 @@
 
 [![Scope](https://img.shields.io/badge/Scope-4_settings_%C2%B7_5_security_features_%C2%B7_5_rulesets-00338D?style=flat-square)](#-what-this-applies)
 [![Mode](https://img.shields.io/badge/Default-Preview_only-005EB8?style=flat-square)](#-launch-sequence)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](#-before-you-start)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)](#-before-you-start)
 [![Verification](https://img.shields.io/badge/Verification-Read_back_after_apply-00875A?style=flat-square)](#-verification-and-recovery)
 
 [Prepare](#-before-you-start) · [Launch](#-launch-sequence) · [Labels](#-initialize-issue-labels) · [Coverage](#-what-this-applies) · [Clean up](#-after-launch-keep-adapt-or-remove) · [Maintain](#-maintain-the-baseline)
@@ -24,7 +24,7 @@
 
 | Prerequisite | Ready when… |
 | --- | --- |
-| **Runtime** | Python **3.10+** and a recent [GitHub CLI](https://cli.github.com/) are installed. |
+| **Runtime** | Python **3.11+** and a recent [GitHub CLI](https://cli.github.com/) are installed. |
 | **Destination** | The new repository exists and contains the template files. |
 | **Template cleanup** | The template-only section of `AGENTS.md`, between its `template-only` markers, is deleted, and the two `contact_links` URLs in `.github/ISSUE_TEMPLATE/config.yml` name the new repository. `Repository integrity` fails in a generated repository until both are done. |
 | **Identity** | `gh auth status --hostname github.com` shows an account with administrator access to the destination. Sign in with `gh auth login --hostname github.com`, or set `GH_TOKEN` to a fine-grained token. |

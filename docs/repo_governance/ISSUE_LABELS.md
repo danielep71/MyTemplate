@@ -107,7 +107,7 @@ The table below lists the descriptions defined in `.github/labels.json`, which s
 
 ## Offline issue audit
 
-Export issues in GitHub REST JSON format, then identify the repository explicitly so dependency URLs resolve correctly. The audit needs Python and Node.js, because it validates the catalogue with the synchronization script:
+Export issues in GitHub REST JSON format, then identify the repository explicitly so dependency URLs resolve correctly. The audit needs Python 3.11+ and Node.js, because it validates the catalogue with the synchronization script:
 
 ```sh
 python tools/check_issues.py --input issues.json --repo-name OWNER/REPOSITORY

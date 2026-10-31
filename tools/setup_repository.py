@@ -311,6 +311,9 @@ def run(args, call=api):
 
 
 def main():
+    if sys.version_info < (3, 11):
+        print('ERROR: Python 3.11 or later is required.', file=sys.stderr)
+        return 2
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repo', required=True, help='Explicit destination owner/repository')
     parser.add_argument('--config', type=Path, default=CONFIG)
