@@ -5,11 +5,14 @@ workbooks, such as SA-CCR, SFT, FRTB, LCR, and NSFR. It provides:
 
 - editing and Git policies for Excel workbooks, exported VBA source, and
   byte-preserved regulatory source copies;
-- issue labels, issue forms, a pull request template, and triage automation;
+- issue labels, issue forms, a pull request template, triage automation, and a
+  workflow that keeps milestones on issues only;
 - a documented GitHub settings baseline, including security features, applied
   and verified by a script that also writes a dated evidence record;
-- a security policy, Dependabot updates for the pinned Actions, and optional
-  daily traffic collection.
+- quality gates: Ruff, strict mypy and actionlint, plus tests that hold the
+  workflows to pinned actions, explicit permissions and the required check;
+- a security policy, Dependabot updates for the pinned Actions and the
+  hash-locked Python dependencies, and optional daily traffic collection.
 
 After creating a repository with **Use this template**, follow the
 [repository setup guide](docs/setup/REPOSITORY_SETUP.md) to apply its settings.

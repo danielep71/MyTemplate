@@ -12,7 +12,7 @@ This repository defines 20 issue labels, each with a name, description, and colo
 | Detect issue-label drift | Checks daily at 05:17 UTC and manually; PR runs use offline fixtures. Reports drift without modifying labels. |
 | Issue triage | Audits open issues on issue events or manual runs. Reports missing assignee, priority, milestone, dependency section, invalid labels, and inconsistent blocked status. |
 | Keep milestones issue-only | Removes any milestone set on a pull request, on each pull-request event and in a daily and manual scan of every pull request. It never checks out pull-request code. |
-| Dependabot (`.github/dependabot.yml`) | Opens weekly grouped pull requests for the SHA-pinned GitHub Actions and the pinned configuration parser, labelled `ci` and `P3` and assigned to me. Nothing merges automatically. |
+| Dependabot (`.github/dependabot.yml`) | Opens weekly grouped pull requests for the SHA-pinned GitHub Actions, the hash-locked configuration parser, and the hash-locked Python quality tools, labelled `ci` and `P3` and assigned to me. Nothing merges automatically. |
 
 Among these workflows, only synchronization has `issues: write` and only *Keep milestones issue-only* has `pull-requests: write`; outside them, only the optional traffic-alert job writes issues ([TRAFFIC.md](TRAFFIC.md)). `tests/test_workflow_controls.py` fails if any other job gains a write permission. PR validation is read-only. Actions are pinned to full commit SHAs.
 
