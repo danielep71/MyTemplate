@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Check the links in the repository's Markdown files.
 
-Offline, every relative link must name an existing, non-empty file inside the
-repository, and every fragment must name a heading or an explicit anchor of
+Offline, every relative link must name an existing directory or non-empty file
+inside the repository, and every fragment must name a heading or an explicit anchor of
 the Markdown file it points to. With --external, each http(s) link is also
 requested once, except absolute links into this repository itself: a private
 repository answers 404 to anonymous requests, so they are not checked at all.

@@ -1,5 +1,5 @@
 name: "🐛 Bug report"
-description: "Report reproducible incorrect behavior in source, tooling or documentation."
+description: "Report reproducible incorrect behavior in source or tooling. Report documentation problems with the Documentation form."
 title: "[Bug]: "
 labels: ["bug", "P2"]
 assignees: ["danielep71"]
@@ -26,7 +26,6 @@ body:
         - Workbook and VBA source
         - Tests and fixtures
         - Tooling and CI
-        - Documentation
         - Repository and governance
     validations:
       required: true
@@ -81,7 +80,7 @@ body:
     id: environment
     attributes:
       label: "🖥️ Environment"
-      description: Write "N/A" for tooling or documentation defects that do not depend on the host.
+      description: Write "N/A" for tooling defects that do not depend on the host.
       value: |
         Excel version/build:
         Office bitness:
@@ -114,7 +113,7 @@ body:
     attributes:
       label: "🗓️ Target end date (Europe/Rome)"
       description: ISO calendar date YYYY-MM-DD, earlier than the due date of the milestone. Triage checks it against the milestone it assigns.
-      placeholder: "2026-12-31"
+      placeholder: "YYYY-MM-DD"
     validations:
       required: true
 

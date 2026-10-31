@@ -54,4 +54,5 @@ See the [governance index](docs/repo_governance/README.md) for repository settin
 
 Repositories created from this template default to the [Mozilla Public License 2.0](LICENSE).
 If you choose a different license for a new repository, replace `LICENSE` and keep
-[`docs/licenses/`](docs/licenses/THIRD_PARTY_NOTICES.txt): the files listed there remain under MPL-2.0.
+[`docs/licenses/`](docs/licenses/THIRD_PARTY_NOTICES.txt): the files listed there keep
+the license the notice states for them, MPL-2.0 or MIT.

@@ -89,15 +89,19 @@ as separate deviations from GitHub defaults.
 | Up-to-date requirement | Strict | Strict |
 | Required check enforced on creation | Yes | No — branch bootstrap exception |
 | Required approving reviews | 0 | 0 |
+| Extra approval when Copilot opens a PR without a human collaborator | Yes | Yes |
 | Required review-thread resolution | Yes | Yes |
 | Permitted PR merge methods | Merge | Squash, merge |
 | Administrator/app bypass | None | None |
 
 **Operational implications:** zero approvals does not establish independent
-review. The release bootstrap exception does not exempt subsequent changes.
-Synchronize integration branches through the approved PR process; do not rely
-on an administrator bypass. Tag protection does not itself restrict tag creation
-or authorize publishing a release.
+review. The extra-approval parameter adds one required review only when the
+required count is above zero, so it has no effect here until that count is
+raised; GitHub's documentation does not state its default. The release
+bootstrap exception does not exempt subsequent changes. Synchronize
+integration branches through the approved PR process; do not rely on an
+administrator bypass. Tag protection does not itself restrict tag creation or
+authorize publishing a release.
 
 The check name and branch patterns are reusable conventions, not built-in
 GitHub jobs or automatically existing branches. Confirm that the required job
