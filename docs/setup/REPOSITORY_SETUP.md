@@ -26,7 +26,7 @@
 | --- | --- |
 | **Runtime** | Python **3.10+** and a recent [GitHub CLI](https://cli.github.com/) are installed. |
 | **Destination** | The new repository exists and contains the template files. |
-| **Template cleanup** | The template-only section of `AGENTS.md`, between its `template-only` markers, is deleted. `Repository integrity` fails in a generated repository until it is. |
+| **Template cleanup** | The template-only section of `AGENTS.md`, between its `template-only` markers, is deleted, and the two `contact_links` URLs in `.github/ISSUE_TEMPLATE/config.yml` name the new repository. `Repository integrity` fails in a generated repository until both are done. |
 | **Identity** | `gh auth status --hostname github.com` shows an account with administrator access to the destination. Sign in with `gh auth login --hostname github.com`, or set `GH_TOKEN` to a fine-grained token. |
 | **Token permissions** | A fine-grained token has destination repository **Administration: write**, **Contents: read**, and **Checks: read**. A workflow `GITHUB_TOKEN` cannot administer these rulesets. Never commit tokens. |
 | **Integrity check** | Actions is enabled and `Repository integrity` has succeeded on the **current default-branch HEAD**. |

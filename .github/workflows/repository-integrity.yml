@@ -43,6 +43,17 @@ jobs:
             echo "::error file=AGENTS.md::Delete the template-only section of AGENTS.md, including its markers, in a generated repository."
             exit 1
           fi
+      - name: Check that issue contact links point to this repository
+        run: |
+          expected="https://github.com/${GITHUB_REPOSITORY,,}/"
+          failed=0
+          while read -r url; do
+            if [[ "${url,,}" != "$expected"* ]]; then
+              echo "::error file=.github/ISSUE_TEMPLATE/config.yml::Contact link $url does not point to $GITHUB_REPOSITORY; update it after creating a repository from the template."
+              failed=1
+            fi
+          done < <(sed -n -E 's/^[[:space:]]*url:[[:space:]]*"?([^"]+)"?[[:space:]]*$/\1/p' .github/ISSUE_TEMPLATE/config.yml)
+          exit "$failed"
       - name: Validate template contents
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
