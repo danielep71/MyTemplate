@@ -146,7 +146,7 @@ inherited policies may impose additional restrictions.
 | `.github/PULL_REQUEST_TEMPLATE.md` | **Keep and adapt** | Records linked issues, validation, final-head review and what was not validated. Add the project's own checks to *Validated*. |
 | `.github/workflows/traffic-history.yml`, `tools/traffic_history.py`, `tests/test_traffic_history.py`, `docs/repo_governance/TRAFFIC.md` | **Keep; enable if wanted** | Optional traffic collection. It does nothing until you follow *Enabling* in `TRAFFIC.md`. Remove all four together if you never want it. |
 | `pyproject.toml`, `tools/requirements-quality-ci.txt` | **Keep** | Ruff and strict mypy settings and their hash-locked versions; `tests/test_quality_gates.py` proves the complexity ceiling and strict mode are active. |
-| `.github/dependabot.yml`, `.github/requirements.txt` | **Keep** | Proposes updates to the SHA-pinned Actions and the pinned configuration parser that the workflow control tests use. Set `target-branch` if development happens on a release branch. |
+| `.github/dependabot.yml`, `.github/requirements.txt` | **Keep** | Proposes updates to the SHA-pinned Actions, the hash-locked configuration parser that the workflow control tests use, and the hash-locked quality tools. Set `target-branch` if development happens on a release branch. |
 | `.github/workflows/repository-integrity.yml` | **Keep and evolve** | Supplies the required `Repository integrity` check. Add project-specific checks as the project grows. |
 | GitHub **Template repository** setting | **Review separately** | Choose whether the new project should itself be reusable as a template; the setup script does not change this flag. |
 
@@ -160,10 +160,13 @@ utilities. Keep them in the source template so future repositories receive them.
 2. Create a normal task branch and PR for cleanup. Protection remains active after
    setup; do not rely on direct pushes to the default branch.
 3. In that same PR, add meaningful project checks to the workflow. Keep the job
-   name **`Repository integrity`**, its coverage of all relevant PRs, the
-   **Run repository tests** step, and the existing required-document and
-   whitespace checks. That step also runs the label-catalogue and issue-triage
-   tests in `tests/`, which stay after the setup tests are removed.
+   name **`Repository integrity`**, its coverage of all relevant PRs, the steps
+   that install the configuration parser, the quality tools and actionlint, the
+   **Run repository tests**, Ruff, mypy and actionlint steps, and the existing
+   required-document and whitespace checks. The remaining tests in `tests/`
+   (label catalogue, issue triage, workflow controls, quality gates, Markdown
+   links and traffic history) stay after the setup tests are removed; without
+   those install steps, the workflow control and quality-gate tests fail.
 4. Remove only the retired setup files, together:
 
    ```text
@@ -212,7 +215,7 @@ and run the offline tests before applying it. Install the pinned configuration
 parser once; without it the workflow control tests are skipped locally:
 
 ```sh
-python -m pip install -r .github/requirements.txt
+python -m pip install --require-hashes -r .github/requirements.txt
 python -m unittest discover -s tests -v
 ```
 

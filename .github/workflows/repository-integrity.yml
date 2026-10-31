@@ -34,7 +34,12 @@ jobs:
         with:
           python-version: "3.13"
       - name: Install pinned configuration parser
-        run: python -m pip install --disable-pip-version-check -r .github/requirements.txt
+        run: |
+          python -m pip install \
+            --disable-pip-version-check \
+            --only-binary=:all: \
+            --require-hashes \
+            -r .github/requirements.txt
       - name: Install hash-locked Python quality tools
         run: |
           python -m pip install \
@@ -123,6 +128,11 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install pinned configuration parser
-        run: python -m pip install --disable-pip-version-check -r .github/requirements.txt
+        run: |
+          python -m pip install \
+            --disable-pip-version-check \
+            --only-binary=:all: \
+            --require-hashes \
+            -r .github/requirements.txt
       - name: Run repository tests
         run: python -m unittest discover -s tests

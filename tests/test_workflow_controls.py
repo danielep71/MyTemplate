@@ -114,6 +114,27 @@ class WorkflowControlTests(unittest.TestCase):
         self.assertEqual(step['env'], {'GH_TOKEN': '${{ github.token }}'})
         self.assertNotIn('${{', step['run'])
 
+    def test_every_pip_install_is_hash_locked(self):
+        installs = 0
+        for name, document in workflows().items():
+            for job_id, job in document['jobs'].items():
+                for step in job.get('steps', []):
+                    run = step.get('run') or ''
+                    if 'pip install' not in run:
+                        continue
+                    installs += 1
+                    with self.subTest(workflow=name, job=job_id, step=step.get('name')):
+                        self.assertIn('--require-hashes', run)
+                        self.assertIn('--only-binary=:all:', run)
+                        self.assertRegex(run, r'-r \S+requirements[\w.-]*\.txt')
+        self.assertGreater(installs, 0)
+        for path in ('.github/requirements.txt', 'tools/requirements-quality-ci.txt'):
+            text = (ROOT / path).read_text(encoding='utf-8')
+            for requirement in re.split(r'\n(?=\S)', re.sub(r'(?m)^#.*\n?', '', text).strip()):
+                with self.subTest(file=path, requirement=requirement.split()[0]):
+                    self.assertRegex(requirement.split()[0], r'^[\w.-]+==[\w.]+$')
+                    self.assertRegex(requirement, r'--hash=sha256:[0-9a-f]{64}')
+
     def test_dependabot_covers_each_pinned_dependency_once(self):
         document = yaml.safe_load((ROOT / '.github/dependabot.yml').read_text(encoding='utf-8'))
         self.assertEqual(document['version'], 2)
