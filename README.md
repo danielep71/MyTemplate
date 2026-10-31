@@ -21,9 +21,10 @@ workbooks, such as SA-CCR, SFT, FRTB, LCR, and NSFR. It provides:
 GitHub copies files from a template, not its settings. In order:
 
 1. Create the repository with **Use this template**.
-2. Delete the template-only section of `AGENTS.md`, with its markers, and point
+2. Delete the template-only section of `AGENTS.md`, with its markers, point
    the two contact links in `.github/ISSUE_TEMPLATE/config.yml` to the new
-   repository. **Repository integrity** fails until you do.
+   repository, and set `target-branch` in `.github/dependabot.yml` to its
+   release branch or remove it. **Repository integrity** fails until you do.
 3. Enable Actions and let **Repository integrity** pass on the default branch.
 4. Apply and verify the settings baseline, as the
    [repository setup guide](docs/setup/REPOSITORY_SETUP.md) describes. It
