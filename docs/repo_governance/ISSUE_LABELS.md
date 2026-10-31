@@ -45,7 +45,7 @@ A form sets the default priority; triage confirms or changes it. Raise a bug to 
 Every open issue also needs a target end date: an ISO `YYYY-MM-DD` calendar date (Europe/Rome) earlier than the due date of its milestone. The bug, enhancement, and documentation forms ask for it in the *Target end date* field. On other issues, including private security contacts, add it during triage as a line in the issue body:
 
 ```text
-- Target end date: 2026-12-31 (Europe/Rome)
+- Target end date: YYYY-MM-DD (Europe/Rome)
 ```
 
 When both are present, that line takes precedence over the form field, so edit the line to reschedule. Triage reports a missing or invalid date (`target-date`), and a milestone without a due date or a target end date on or after it (`milestone-due`).
