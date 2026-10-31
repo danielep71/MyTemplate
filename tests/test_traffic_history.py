@@ -416,6 +416,15 @@ class AlertTests(unittest.TestCase):
                 self.assertEqual(check_issues.audit([candidate], {1: "open"}, "o/r",
                                                     assignee="me"), [])
 
+    def test_an_overdue_milestone_is_refused(self) -> None:
+        for due in ("2026-10-14", "2026-10-10"):
+            with self.subTest(due=due), workspace() as ws:
+                for day, views in (("2026-10-13", 50), ("2026-10-14", 150)):
+                    ws.collect([(day, views, 1)], clones=[(day, 1, 1)])
+                    ws.merge(f"{day}T06:00:00")
+                with self.assertRaisesRegex(TrafficError, "not after the snapshot date 2026-10-14"):
+                    traffic_history.alert(ws.data, due)
+
     def test_a_spike_needs_double_and_the_minimum_growth(self) -> None:
         with workspace() as ws:
             # Clones double (4 to 8) but grow by less than 10: no spike.

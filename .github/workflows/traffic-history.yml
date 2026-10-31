@@ -217,11 +217,14 @@ jobs:
           set -euo pipefail
           # The issue-form assignee, which Issue triage requires on every issue.
           ASSIGNEE="$(python -c 'import sys; from pathlib import Path; sys.path.insert(0, "source/tools"); import check_issues; print(check_issues.configured_assignee(Path("source")))')"
-          # The active milestone: the open one with the earliest due date.
-          milestone="$(gh api "repos/$GH_REPO/milestones?state=open&sort=due_on&direction=asc" \
-            --jq '[.[] | select(.due_on != null)][0] | [.title, .due_on[0:10]] | @tsv')"
+          # The active milestone: the open one with the earliest due date after
+          # today (UTC). `// empty` prints nothing when there is none.
+          milestone="$(TODAY="$(date -u +%F)" gh api \
+            "repos/$GH_REPO/milestones?state=open&sort=due_on&direction=asc" \
+            --jq 'first(.[] | select(.due_on != null and .due_on[0:10] > env.TODAY))
+                  // empty | [.title, .due_on[0:10]] | @tsv')"
           if [ -z "$milestone" ]; then
-            echo "::error::No open milestone with a due date to file the alert under"
+            echo "::error::No open milestone due after today to file the alert under"
             exit 1
           fi
           IFS=$'\t' read -r title due <<< "$milestone"
