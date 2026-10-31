@@ -120,7 +120,13 @@ pull requests.
 On a public repository, a README can show one with
 `https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/OWNER/REPOSITORY/traffic-history/data/badges/clones.json`.
 Large numbers are shortened (`1.2k`, `11k`). A badge file changes only when its
-value does.
+value does. Clones include those made by workflow checkouts, so CI activity
+raises the count.
+
+The README shows the three badges for this repository. **Repository integrity**
+fails while a README badge reads another repository's `traffic-history` branch:
+after **Use this template**, point the badges at the new repository, or remove
+them if you do not enable collection.
 
 ### Merge rules
 
