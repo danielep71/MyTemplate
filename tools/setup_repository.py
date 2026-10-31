@@ -45,8 +45,9 @@ def api(method: str, endpoint: str, payload: Json = None) -> Json:
     # Never inherit HTTP debug logging: it can expose authentication headers.
     env = dict(os.environ)
     env.pop('GH_DEBUG', None)
+    # gh writes UTF-8; never decode with the locale code page (cp1252 on Windows).
     result = subprocess.run(command, input=json.dumps(payload) if payload is not None else None,
-                            text=True, capture_output=True, env=env, check=False)
+                            text=True, encoding='utf-8', capture_output=True, env=env, check=False)
     if result.returncode:
         # Do not print CLI stderr (may contain sensitive server or credential detail).
         match = re.search(r'HTTP (\d{3})', result.stderr)

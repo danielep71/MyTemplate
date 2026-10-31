@@ -74,6 +74,16 @@ class TargetDateTests(unittest.TestCase):
                 self.assertEqual(rules([issue(1, target=date)]), [(1, "target-date")])
         self.assertEqual(rules([issue(1, target=None)]), [(1, "target-date")])
 
+    def test_crlf_bodies_are_read(self) -> None:
+        planned = PLANNING.format("2026-11-04").replace("\n", "\r\n") + READY.replace("\n", "\r\n")
+        self.assertEqual(check_issues.target_end_date(planned), "2026-11-04")
+        form = "### 🗓️ Target end date (Europe/Rome)\r\n\r\n2026-11-04\r\n\r\n" + READY.replace("\n", "\r\n")
+        self.assertEqual(check_issues.target_end_date(form), "2026-11-04")
+        item = {"number": 1, "state": "open", "labels": [{"name": "P3"}],
+                "assignees": [{"login": "triage-person"}], "body": planned,
+                "milestone": {"title": "v0.1.0", "due_on": "2026-11-30T08:00:00Z", "state": "open"}}
+        self.assertEqual(rules([check_issues.issue_from_api(item)]), [])
+
     def test_issue_form_field_is_read(self) -> None:
         body = "### 🗓️ Target end date (Europe/Rome)\n\n2026-11-04\n\n" + READY
         self.assertEqual(check_issues.target_end_date(body), "2026-11-04")

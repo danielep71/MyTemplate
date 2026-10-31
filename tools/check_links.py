@@ -18,6 +18,7 @@ import os
 import re
 import subprocess
 import sys
+import unicodedata
 from collections.abc import Iterable, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -34,7 +35,14 @@ def github_slug(heading: str) -> str:
     # Decode only complete character references (ending in ';'), as Markdown does.
     text = re.sub(r"&(?:#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});",
                   lambda match: html.unescape(match.group(0)), re.sub(r"<[^>]+>", "", text))
-    return re.sub(r"[^\w\- ]", "", text.lower()).replace(" ", "-")
+    return "".join(char for char in text.lower() if slug_character(char)).replace(" ", "-")
+
+
+def slug_character(char: str) -> bool:
+    """GitHub keeps word characters (letters, marks, decimal digits and connector
+    punctuation, such as the variation selector U+FE0F after many emoji), "-" and spaces."""
+    return char in "- " or unicodedata.category(char)[:1] in ("L", "M") \
+        or unicodedata.category(char) in ("Nd", "Pc")
 
 
 def heading_anchor(slug: str, used: dict[str, int]) -> str:
@@ -121,7 +129,8 @@ def markdown_links(text: str) -> tuple[list[str], set[str]]:
 def tracked_markdown(root: Path) -> list[Path]:
     try:
         names = subprocess.run(["git", "-C", str(root), "ls-files", "-z", "--", "*.md"],
-                               capture_output=True, text=True, check=True).stdout.split("\0")
+                               capture_output=True, text=True, encoding="utf-8",
+                               check=True).stdout.split("\0")
         return [root / name for name in names if name]
     except (OSError, subprocess.CalledProcessError):
         return [path for path in root.rglob("*.md") if ".git" not in path.relative_to(root).parts]

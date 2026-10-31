@@ -59,6 +59,11 @@ class Finding:
     message: str
 
 
+def normalized(body: str) -> str:
+    """Use LF line endings: issues edited in a browser are saved with CRLF."""
+    return body.replace("\r\n", "\n").replace("\r", "\n")
+
+
 def issue_from_api(item: Mapping[str, Any]) -> Issue:
     milestone = item.get("milestone")
     return Issue(
@@ -67,7 +72,7 @@ def issue_from_api(item: Mapping[str, Any]) -> Issue:
         labels=tuple(str(label["name"]) for label in item.get("labels", [])),
         assignees=tuple(str(user["login"]) for user in item.get("assignees", [])),
         milestone=str(milestone["title"]) if milestone else None,
-        body=str(item.get("body") or ""),
+        body=normalized(str(item.get("body") or "")),
         milestone_due=str(milestone["due_on"])[:10] if milestone and milestone.get("due_on") else None,
         milestone_state=str(milestone.get("state") or "open").lower() if milestone else "open",
     )
@@ -100,6 +105,7 @@ def references(lines: Iterable[str], repository: str, own: int) -> set[int]:
 
 def target_end_date(body: str) -> str | None:
     """Read the planning line or the issue-form field without guessing a date."""
+    body = normalized(body)
     match = PLANNED_TARGET.search(body) or FORM_TARGET.search(body)
     return ROME_SUFFIX.sub("", match.group(1)) if match else None
 
@@ -204,7 +210,7 @@ def catalogue_labels(root: Path) -> set[str]:
     result = subprocess.run(
         ["node", str(root / ".github/scripts/labels-sync.mjs"), "--mode", "validate",
          "--manifest", str(root / ".github/labels.json")],
-        capture_output=True, text=True, check=False,
+        capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
     )
     if result.returncode:
         raise ValueError(result.stderr.strip() or result.stdout.strip())

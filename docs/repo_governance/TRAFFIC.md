@@ -183,10 +183,10 @@ with the one before (`traffic_history.py alert`) and opens one issue, titled
 At most one issue is opened per snapshot date: the job skips a date whose
 issue exists, open or closed. The issue is assigned to the issue-form account,
 labelled `P3` and `repository`, filed under the open milestone with the
-earliest due date, and carries a dependency section and a target end date
-(seven days after the snapshot, or the day before the milestone's due date if
-that is earlier), so it passes **Issue triage**. The job needs at least one
-open milestone with a due date.
+earliest due date after the collection day, and carries a dependency section
+and a target end date (seven days after the snapshot, or the day before the
+milestone's due date if that is earlier), so it passes **Issue triage**. The
+job needs at least one open milestone due after the collection day.
 
 The job uses the workflow token with `issues: write` and `contents: read`. It
 has no environment, so it never receives the App's key or token, and it runs
@@ -207,7 +207,7 @@ invalid, and leaves the history unchanged. Read the failing step:
 | *Merge*: `ERROR: ...; the history was not changed` | The API returned an unexpected shape, or a history file no longer has the expected layout. | Inspect the response or the named file; a file edited by hand must keep its header and columns. |
 | *Commit and push*: `Could not push the history` | `traffic-history` kept moving, or a rule rejected the push. | Check the branch's rules and recent commits, then run again. |
 | *Check out traffic-history* fails | The branch does not exist or was deleted. | Create it as in *Enabling*, or restore it from the last known commit; never recreate it empty over existing history. |
-| *Traffic alert*: `No open milestone with a due date` | Every milestone is closed, or none has a due date. | Open the next milestone with a due date, then run the workflow again. |
+| *Traffic alert*: `No open milestone due after today` | Every open milestone is overdue or has no due date, or none is open. | Open the next milestone with a later due date, or move the current one's due date, then run the workflow again. |
 | *Traffic alert*: `gh issue create` fails | A label, the assignee or the milestone no longer exists. | Restore it, then run the workflow again; the history is already saved. |
 
 A failed run can always be repeated: the merge is idempotent, and each

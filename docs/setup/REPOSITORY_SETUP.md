@@ -4,12 +4,12 @@
 
 **From template files to a configured GitHub repository**
 
-[![Scope](https://img.shields.io/badge/Scope-4_settings_%C2%B7_5_security_features_%C2%B7_5_rulesets-00338D?style=flat-square)](#-what-this-applies)
-[![Mode](https://img.shields.io/badge/Default-Preview_only-005EB8?style=flat-square)](#-launch-sequence)
+[![Scope](https://img.shields.io/badge/Scope-4_settings_%C2%B7_5_security_features_%C2%B7_5_rulesets-00338D?style=flat-square)](#%EF%B8%8F-what-this-applies)
+[![Mode](https://img.shields.io/badge/Default-Preview_only-005EB8?style=flat-square)](#%EF%B8%8F-launch-sequence)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)](#-before-you-start)
 [![Verification](https://img.shields.io/badge/Verification-Read_back_after_apply-00875A?style=flat-square)](#-verification-and-recovery)
 
-[Prepare](#-before-you-start) · [Launch](#-launch-sequence) · [Labels](#-initialize-issue-labels) · [Coverage](#-what-this-applies) · [Clean up](#-after-launch-keep-adapt-or-remove) · [Maintain](#-maintain-the-baseline)
+[Prepare](#-before-you-start) · [Launch](#%EF%B8%8F-launch-sequence) · [Labels](#%EF%B8%8F-initialize-issue-labels) · [Coverage](#%EF%B8%8F-what-this-applies) · [Clean up](#-after-launch-keep-adapt-or-remove) · [Maintain](#-maintain-the-baseline)
 
 </div>
 

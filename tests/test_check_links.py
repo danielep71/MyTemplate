@@ -31,6 +31,10 @@ class SlugTests(unittest.TestCase):
     def test_github_slugs(self) -> None:
         self.assertEqual(check_links.github_slug("Branches and publication"), "branches-and-publication")
         self.assertEqual(check_links.github_slug("🧭 Before you start"), "-before-you-start")
+        # U+FE0F after an emoji is a combining mark that GitHub keeps; "①" is not a word character.
+        self.assertEqual(check_links.github_slug("▶\ufe0f Launch sequence"), "\ufe0f-launch-sequence")
+        self.assertEqual(check_links.github_slug("① Preview the changes"), "-preview-the-changes")
+        self.assertEqual(check_links.github_slug("Café 2026_v1"), "café-2026_v1")
         self.assertEqual(check_links.github_slug("Run `check.py` [now](x.md)"), "run-checkpy-now")
         self.assertEqual(check_links.github_slug("Rock &amp; Roll"), "rock--roll")
 
