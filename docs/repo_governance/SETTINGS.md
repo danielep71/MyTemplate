@@ -22,8 +22,8 @@ particular, deletion protection may be preselected when creating a ruleset;
 creating and activating that targeted ruleset is still a customization.
 
 Reference documentation checked: **2026-10-29**. Repository-specific evidence,
-observation dates and rule IDs belong in the local evidence record, not in this
-portable file. Copying this file does not apply settings or verify another repository.
+observation dates and rule IDs belong in the repository's setup record described
+in the [setup guide](../setup/REPOSITORY_SETUP.md), not in this portable file. Copying this file does not apply settings or verify another repository.
 
 [General differences](#general) · [Custom protection](#rulesets) · [Reuse](#reuse) · [Sources](#sources)
 
@@ -53,11 +53,11 @@ as separate deviations from GitHub defaults.
 
 | Custom ruleset | Target | Added restrictions |
 | --- | --- | --- |
-| Protect default branch | `~DEFAULT_BRANCH` | Require PR, resolved conversations and strict up-to-date `Repository integrity` from GitHub Actions; allow merge commits only; block deletion and force pushes. |
+| Protect main | `~DEFAULT_BRANCH` | Require PR, resolved conversations and strict up-to-date `Repository integrity` from GitHub Actions; allow merge commits only; block deletion and force pushes. |
 | Protect release branches | `refs/heads/release/**` | Require PR, resolved conversations and the same strict required check; allow squash or merge commits; block deletion and force pushes. |
 | Prevent release branch deletion | `refs/heads/release/**` | Independent deletion restriction. |
 | Protect release tags | `refs/tags/v*` | Block updates, deletion and force pushes. |
-| Protect traffic history | `refs/heads/traffic-history` | Block deletion and force pushes; allow the intended data-writing automation. |
+| Protect traffic history | `refs/heads/traffic-history` | Block deletion and force pushes. Direct pushes stay allowed for traffic-data automation that a generated repository may add. |
 
 ### 🔬 Supporting parameters for the two PR rulesets
 
@@ -90,7 +90,7 @@ reports on every relevant PR before adopting these rules.
 - Verify the destination's actual default and inherited policies before copying a value.
 - Include a setting only when both its configured value and comparison default are known.
 - Remove rows that match the destination's default; retain only its actual differences.
-- Keep unverified settings and historical evidence in the separate local evidence record.
+- Keep unverified settings and historical evidence in the setup record.
 - Recheck this comparison after platform-default changes or an approved configuration change.
 
 > [!NOTE]
@@ -125,5 +125,6 @@ The executable configuration is [repository-settings.json](../setup/repository-s
 See [REPOSITORY_SETUP.md](../setup/REPOSITORY_SETUP.md) for preview, apply and verification commands.
 The script covers the four general differences and five rulesets documented above;
 it does not configure the security features excluded from this reference.
-`Protect main` is the API ruleset name for the default-branch protection above;
-its target is `~DEFAULT_BRANCH`, not a fixed branch name.
+`Protect main` targets `~DEFAULT_BRANCH`, so it follows the default branch under
+any name. The script matches rulesets by name: renaming one in the configuration
+creates a new ruleset and leaves the old one in place.

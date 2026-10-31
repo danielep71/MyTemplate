@@ -1,8 +1,8 @@
 # 🏷️ Issue labels & automation
 
-![Labels](https://img.shields.io/badge/labels-20-1D76DB) ![Policy](https://img.shields.io/badge/policy-template-6F42C1)
+![Labels](https://img.shields.io/badge/labels-20-1D76DB)
 
-This repository defines 20 issue labels, each with a name, description, and colour. `.github/labels.json` is authoritative; edit it through a pull request. `prune: true` removes labels outside the selected catalogue, including their issue associations.
+This repository defines 20 issue labels, each with a name, description, and colour. `.github/labels.json` is authoritative; edit it through a pull request. `prune: true` removes labels outside the catalogue, including their issue associations.
 
 ## ⚙️ Automation
 
@@ -17,12 +17,12 @@ Only synchronization has `issues: write`. PR validation is read-only. Actions ar
 ## 🚀 New repository
 
 1. Enable Actions and run **Sync issue labels** from the default branch. GitHub template creation copies files; run synchronization to establish the live labels.
-2. Keep template mode for the core catalogue, or set `.github/label-policy.json` to generated mode with profile `application`, `library`, or `ui-component`. Current overlays are empty, so each currently yields the same 20 labels.
-3. My GitHub account, `danielep71`, is the default assignee in `tools/check_issues.py` (`OWNER`), the three issue forms (`assignees`), and corresponding test fixtures. If someone else maintains a generated repository, replace my account in all three places.
+2. To add labels for a generated repository, such as one per regulatory regime, add them to the `labels` list in `.github/labels.json`, sorted case-insensitively by name, and update the label counts in the documentation. **Repository integrity** checks both.
+3. My GitHub account, `danielep71`, is the assignee in the three issue forms (`assignees`); the triage check reads it from `bug.yml`. If someone else maintains a generated repository, replace my account in the three forms.
 4. Create project milestones, give each open issue exactly one priority and a milestone, and assign it to me (or the account configured for a generated repository). Use `blocked` only for a named open prerequisite or `External condition:`. P1 is reserved for confirmed calculation bugs.
 5. Label validation covers pull requests to every branch. Live synchronization runs only on the current default branch, including after a rename.
 
-**Keep** the label manifests, scripts, all three workflows, issue forms, triage checker/tests, and this guide after bootstrap. They provide ongoing maintenance and must not be deleted with one-time repository setup files.
+**Keep** the label manifest, scripts, all three workflows, issue forms, triage checker/tests, and this guide after bootstrap. They provide ongoing maintenance and must not be deleted with one-time repository setup files.
 
 ## 🎨 Catalogue
 
@@ -42,7 +42,7 @@ The table below lists the descriptions defined in `.github/labels.json`, which s
 | `invalid` | `#E4E669` | Report is incomplete, unsupported, or not actionable as submitted |
 | `P1` | `#B60205` | Confirmed calculation bug: wrong results for valid inputs (reserved for this case) |
 | `P2` | `#D93F0B` | Material correctness, robustness, or maintainability defect |
-| `P3` | `#FBCA04` | Non-blocking quality, testing, documentation, or technical-debt improvement |
+| `P3` | `#FBCA04` | Non-blocking quality, testing, documentation, setup or technical-debt work |
 | `question` | `#D876E3` | I need further information or need to make a decision |
 | `refactor` | `#6F42C1` | Internal restructuring intended to preserve supported behavior |
 | `release` | `#B60276` | Release preparation, certification, evidence, packaging, or publication |
@@ -53,10 +53,10 @@ The table below lists the descriptions defined in `.github/labels.json`, which s
 
 ## Offline issue audit
 
-Export issues in GitHub REST JSON format, then identify the repository explicitly so dependency URLs resolve correctly:
+Export issues in GitHub REST JSON format, then identify the repository explicitly so dependency URLs resolve correctly. The audit needs Python and Node.js, because it validates the catalogue with the synchronization script:
 
 ```sh
 python tools/check_issues.py --input issues.json --repo-name OWNER/REPOSITORY
 ```
 
-Triage uses the core labels and the profile/domain overlays selected in `.github/label-policy.json`.
+Triage accepts only the labels defined in `.github/labels.json`.
