@@ -8,7 +8,9 @@
 ## 🔗 Linked issues
 
 <!-- Link task issues with Resolves #; integration and sync PRs use Refs #
-for the issues and preceding PRs they carry. Milestones belong to issues only. -->
+for the issues and preceding PRs they carry. Release branches section of
+docs/repo_governance/PULL_REQUESTS.md: bases, keywords and merge methods.
+Milestones belong to issues only. -->
 
 Resolves #
 
