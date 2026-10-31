@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import { appendFile, readFile } from "node:fs/promises";
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 
 const EXPECTED_SCHEMA_VERSION = 2;
 const DEFAULT_MANIFEST = ".github/labels.json";
@@ -10,9 +11,9 @@ const API_VERSION = "2022-11-28";
 const LABELS_PER_PAGE = 100;
 const MAX_LABEL_PAGES = 100;
 const MAX_RATE_LIMIT_RETRIES = 2;
-const MAX_RETRY_DELAY_MS = 5000;
+export const MAX_RETRY_DELAY_MS = 5000;
 
-function compareNames(left, right) {
+export function compareNames(left, right) {
   const leftKey = left.toLowerCase();
   const rightKey = right.toLowerCase();
   if (leftKey < rightKey) return -1;
@@ -25,7 +26,7 @@ function sameKeys(value, expected) {
   return JSON.stringify(actual) === JSON.stringify([...expected].sort());
 }
 
-function normalizedLiveLabel(label) {
+export function normalizedLiveLabel(label) {
   return {
     name: String(label.name ?? ""),
     color: String(label.color ?? "").toUpperCase(),
@@ -173,7 +174,7 @@ function parseArguments(argv) {
   return parsed;
 }
 
-async function loadJson(path) {
+export async function loadJson(path) {
   let text;
   try {
     text = await readFile(path, "utf8");
@@ -197,7 +198,9 @@ function splitRepository(repository) {
 
 function apiUrl(repository, suffix) {
   const [owner, repo] = splitRepository(repository);
-  return `https://api.github.com/repos/${owner}/${repo}${suffix}`;
+  // The runner sets GITHUB_API_URL, which differs from api.github.com on GitHub Enterprise.
+  const base = (process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/+$/, "");
+  return `${base}/repos/${owner}/${repo}${suffix}`;
 }
 
 function sleep(milliseconds) {
@@ -215,7 +218,7 @@ function isRateLimited(response) {
     );
 }
 
-function retryDelayMs(response, attempt) {
+export function retryDelayMs(response, attempt) {
   const header = response.headers.get("retry-after");
   const retryAfter = header !== null && header.trim() !== "" ? Number(header) : NaN;
   if (Number.isFinite(retryAfter) && retryAfter >= 0) {
@@ -250,7 +253,7 @@ async function githubRequest(repository, token, method, suffix, body) {
   }
 }
 
-async function listLiveLabels(repository, token) {
+export async function listLiveLabels(repository, token) {
   const labels = [];
   for (let page = 1; page <= MAX_LABEL_PAGES; page += 1) {
     const batch = await githubRequest(
@@ -522,23 +525,26 @@ async function main() {
   await publishSummary(renderSummary({ mode: "reconcile", ...summaryBase, changes, verified }));
 }
 
-main().catch(async error => {
-  const message = error instanceof Error ? error.message : String(error);
-  try {
-    await publishSummary(renderSummary({
-      mode: "failed",
-      ...(runState.summaryBase ?? {
-        manifest: null,
-        manifestPath: null,
-        desiredLabels: []
-      }),
-      changes: runState.changes,
-      verified: runState.verified,
-      partial: runState.applying,
-      error: message
-    }));
-  } finally {
-    process.stderr.write(`${message}\n`);
-    process.exitCode = 1;
-  }
-});
+// Run only when executed directly, so that labels-drift.mjs can import the planner.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(async error => {
+    const message = error instanceof Error ? error.message : String(error);
+    try {
+      await publishSummary(renderSummary({
+        mode: "failed",
+        ...(runState.summaryBase ?? {
+          manifest: null,
+          manifestPath: null,
+          desiredLabels: []
+        }),
+        changes: runState.changes,
+        verified: runState.verified,
+        partial: runState.applying,
+        error: message
+      }));
+    } finally {
+      process.stderr.write(`${message}\n`);
+      process.exitCode = 1;
+    }
+  });
+}
