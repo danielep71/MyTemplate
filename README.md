@@ -1,5 +1,9 @@
 # MyTemplate
 
+[![Clones, including CI](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/danielep71/MyTemplate/traffic-history/data/badges/clones.json)](docs/repo_governance/TRAFFIC.md#badges)
+[![Unique visitors, last 14 days](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/danielep71/MyTemplate/traffic-history/data/badges/visitors.json)](docs/repo_governance/TRAFFIC.md#badges)
+[![Daily unique visitors since tracking began](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/danielep71/MyTemplate/traffic-history/data/badges/visits.json)](docs/repo_governance/TRAFFIC.md#badges)
+
 I use this template to start repositories for regulatory risk calculation
 workbooks, such as SA-CCR, SFT, FRTB, LCR, and NSFR. It provides:
 
@@ -23,8 +27,9 @@ GitHub copies files from a template, not its settings. In order:
 
 1. Create the repository with **Use this template**.
 2. Delete the template-only section of `AGENTS.md`, with its markers, point
-   the two contact links in `.github/ISSUE_TEMPLATE/config.yml` to the new
-   repository, and set `target-branch` in `.github/dependabot.yml` to its
+   the two contact links in `.github/ISSUE_TEMPLATE/config.yml` and the
+   traffic badges at the top of this README to the new repository, or remove
+   the badges, and set `target-branch` in `.github/dependabot.yml` to its
    release branch or remove it. **Repository integrity** fails until you do.
 3. Enable Actions and let **Repository integrity** pass on the default branch.
 4. Apply and verify the settings baseline, as the
