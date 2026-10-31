@@ -9,6 +9,10 @@ name: CodeQL
 # the same pinning and permission rules as every other workflow, and
 # Dependabot updates its action.
 #
+# The push and pull_request branch lists name the default branch, because
+# branch filters cannot refer to it: if the default branch is not main,
+# rename it below. Repository integrity fails while the lists omit it.
+#
 # Availability: code scanning is free on public repositories. A private
 # repository needs GitHub Code Security; there, set the repository variable
 # CODE_SCANNING to "enabled", or the analysis is skipped instead of failing.

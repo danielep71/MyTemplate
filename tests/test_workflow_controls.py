@@ -158,6 +158,17 @@ class WorkflowControlTests(unittest.TestCase):
         self.assertEqual(uses, ['actions/checkout', 'github/codeql-action/init',
                                 'github/codeql-action/analyze'])
 
+    def test_integrity_checks_that_code_scanning_covers_the_default_branch(self):
+        name, job_id = REQUIRED_JOB
+        steps = workflows()[name]['jobs'][job_id]['steps']
+        step = next(step for step in steps
+                    if step.get('name') == 'Check that CodeQL runs on the default branch')
+        self.assertEqual(step['env'], {'DEFAULT_BRANCH': '${{ github.event.repository.default_branch }}'})
+        self.assertIn('.github/workflows/codeql.yml', step['run'])
+        # The parser it imports is installed by an earlier step.
+        install = next(i for i, s in enumerate(steps) if s.get('name') == 'Install pinned configuration parser')
+        self.assertLess(install, steps.index(step))
+
     def test_every_pip_install_is_hash_locked(self):
         installs = 0
         for name, document in workflows().items():
