@@ -77,7 +77,7 @@ as separate deviations from GitHub defaults.
 | Protect release branches | `refs/heads/release/**` | Require PR, resolved conversations and the same strict required check; allow squash or merge commits; block deletion and force pushes. |
 | Prevent release branch deletion | `refs/heads/release/**` | Independent deletion restriction. |
 | Protect release tags | `refs/tags/v*` | Block updates, deletion and force pushes. |
-| Protect traffic history | `refs/heads/traffic-history` | Block deletion and force pushes. Direct pushes stay allowed for traffic-data automation that a generated repository may add. |
+| Protect traffic history | `refs/heads/traffic-history` | Block deletion and force pushes. Direct pushes stay allowed for the optional Traffic history workflow ([TRAFFIC.md](TRAFFIC.md)). |
 
 ### 🔬 Supporting parameters for the two PR rulesets
 
