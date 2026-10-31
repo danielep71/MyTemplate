@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import io
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -78,6 +79,18 @@ class CheckTests(unittest.TestCase):
             "README.md: empty target: empty.md",
             "README.md: unsupported URL scheme: ftp://example.com",
         ])
+
+    def test_tracked_file_missing_from_the_working_tree_is_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "README.md").write_text("[guide](guide.md)\n", encoding="utf-8")
+            (root / "guide.md").write_text("# Guide\n", encoding="utf-8")
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+            (root / "guide.md").unlink()
+            errors, _, _ = check_links.check(root)
+        self.assertEqual(errors, ["guide.md: tracked but missing from the working tree",
+                                  "README.md: missing target: guide.md"])
 
     def test_repository_links_pass(self) -> None:
         errors, _, count = check_links.check(ROOT)

@@ -2,10 +2,23 @@
 
 import json
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def tracked(*patterns):
+    """Files Git tracks, so ignored directories such as .venv/ are never scanned."""
+    try:
+        names = subprocess.run(['git', '-C', str(ROOT), 'ls-files', '-z', '--', *patterns],
+                               capture_output=True, text=True, encoding='utf-8',
+                               check=True).stdout.split('\0')
+    except (OSError, subprocess.CalledProcessError):
+        names = [path.relative_to(ROOT).as_posix() for pattern in patterns
+                 for path in ROOT.glob(f'**/{pattern}') if '.git' not in path.parts]
+    return sorted(ROOT / name for name in names if name and (ROOT / name).is_file())
 
 
 class CatalogueDocumentationTests(unittest.TestCase):
@@ -30,9 +43,7 @@ class CatalogueDocumentationTests(unittest.TestCase):
         expected = str(len(manifest['labels']))
         pattern = re.compile(r'labels-(\d+)-|\b(\d+) (?:issue )?labels\b', re.I)
         counts = []
-        for path in sorted(ROOT.glob('**/*.md')):
-            if '.git' in path.parts:
-                continue
+        for path in tracked('*.md'):
             text = path.read_text(encoding='utf-8')
             counts += [(path.relative_to(ROOT).as_posix(), badge or prose)
                        for badge, prose in pattern.findall(text)]
@@ -74,10 +85,8 @@ class MarkdownTests(unittest.TestCase):
     def test_code_fences_close_on_a_line_of_their_own(self):
         # A closing fence followed by text does not close the block on GitHub.
         problems = []
-        for path in sorted(ROOT.rglob('*.md')):
+        for path in tracked('*.md'):
             relative = path.relative_to(ROOT)
-            if relative.parts[0] == '.git':
-                continue
             opened = None
             for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
                 if not line.lstrip().startswith('```'):
@@ -116,12 +125,9 @@ class TemplateOnlyContentTests(unittest.TestCase):
         outside = agents.replace(block.group(0), '')
         found = [('AGENTS.md', name) for name in sorted(names)
                  if re.search(re.escape(name), outside, re.I)]
-        for path in sorted(ROOT.rglob('*')):
+        for path in tracked():
             relative = path.relative_to(ROOT)
-            allowed = (relative.parts[0] == '.git' or '__pycache__' in relative.parts
-                       or relative.parts[:2] == ('docs', 'licenses')
-                       or relative.as_posix() == 'AGENTS.md')
-            if allowed or not path.is_file():
+            if relative.parts[:2] == ('docs', 'licenses') or relative.as_posix() == 'AGENTS.md':
                 continue
             text = path.read_text(encoding='utf-8', errors='ignore')
             found += [(relative.as_posix(), name) for name in sorted(names)
