@@ -4,9 +4,10 @@
 Offline, every relative link must name an existing, non-empty file inside the
 repository, and every fragment must name a heading or an explicit anchor of
 the Markdown file it points to. With --external, each http(s) link is also
-requested once; links into this repository itself are skipped, because the
-offline check covers them and a private repository answers 404 to anonymous
-requests.
+requested once, except absolute links into this repository itself: a private
+repository answers 404 to anonymous requests, so they are not checked at all.
+Write links to this repository's files as relative links, which the offline
+check covers.
 """
 
 from __future__ import annotations
@@ -167,7 +168,7 @@ def check(root: Path = ROOT) -> tuple[list[str], set[str], int]:
 
 
 def own_repository(url: str, repository: str) -> bool:
-    """Whether a URL points into this repository, which the offline check covers."""
+    """Whether a URL points into this repository; such URLs are not requested."""
     if not repository:
         return False
     prefixes = (f"https://github.com/{repository}", f"https://raw.githubusercontent.com/{repository}/")
