@@ -26,6 +26,7 @@
 | --- | --- |
 | **Runtime** | Python **3.10+** and a recent [GitHub CLI](https://cli.github.com/) are installed. |
 | **Destination** | The new repository exists and contains the template files. |
+| **Template cleanup** | The template-only section of `AGENTS.md`, between its `template-only` markers, is deleted. `Repository integrity` fails in a generated repository until it is. |
 | **Identity** | `gh auth status --hostname github.com` shows an account with administrator access to the destination. Sign in with `gh auth login --hostname github.com`, or set `GH_TOKEN` to a fine-grained token. |
 | **Token permissions** | A fine-grained token has destination repository **Administration: write**, **Contents: read**, and **Checks: read**. A workflow `GITHUB_TOKEN` cannot administer these rulesets. Never commit tokens. |
 | **Integrity check** | Actions is enabled and `Repository integrity` has succeeded on the **current default-branch HEAD**. |
@@ -120,6 +121,7 @@ inherited policies may impose additional restrictions.
 
 | File or setting | Action in the new repository | Reason / dependency |
 | --- | --- | --- |
+| `AGENTS.md` | **Adapt** | Delete the template-only section first; keep the remaining instructions that still apply to the project. |
 | `README.md` | **Adapt** | Replace the MyTemplate title and introduction with the project's purpose, installation and usage. Keep or replace setup links deliberately. |
 | `LICENSE` | **Keep or replace** | MPL-2.0 by default. The integrity workflow requires a non-empty `LICENSE`. |
 | `docs/licenses/` | **Keep** | Notice and license text for the files listed in `THIRD_PARTY_NOTICES.txt`, which remain under MPL-2.0 whatever license you choose. |

@@ -31,3 +31,12 @@ Generated repositories default to MPL-2.0 through the root `LICENSE`. Keep `docs
 ## Template defaults
 
 This repository is a template for future projects. Preserve useful policies and assumptions for file types, tooling, and reserved paths even when they are not used by this template itself. Adapt project-specific names and historical references without stripping reusable capabilities. Describe reserved paths as conventions, not as files or directories that already exist.
+
+<!-- template-only:start -->
+## Template maintenance
+
+This section applies only to the template repository. In a repository generated from the template, delete it together with its markers; **Repository integrity** fails until you do.
+
+- My reference repositories are `danielep71/K-SFTs` (primary) and `danielep71/K-SACCR` (secondary). Compare repository settings, issue labels, issue forms, and automation with them before changing the template.
+- Port improvements in generic form. Do not copy their names, links, issue numbers, or history into template files; only this section and `docs/licenses/` may name them.
+<!-- template-only:end -->

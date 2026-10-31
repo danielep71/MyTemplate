@@ -35,6 +35,14 @@ jobs:
           node .github/scripts/labels-sync.mjs --mode validate
           node .github/scripts/labels-drift.mjs --self-test
           python tools/check_issues.py --check-config
+      - name: Reject template-only content outside the template
+        env:
+          IS_TEMPLATE: ${{ github.event.repository.is_template }}
+        run: |
+          if [[ "$IS_TEMPLATE" != "true" ]] && grep -q 'template-only:start' AGENTS.md; then
+            echo "::error file=AGENTS.md::Delete the template-only section of AGENTS.md, including its markers, in a generated repository."
+            exit 1
+          fi
       - name: Validate template contents
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}

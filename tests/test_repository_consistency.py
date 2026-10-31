@@ -30,3 +30,28 @@ class CatalogueDocumentationTests(unittest.TestCase):
                        for badge, prose in pattern.findall(text)]
         self.assertTrue(counts, 'no documented label counts found')
         self.assertEqual([item for item in counts if item[1] != expected], [])
+
+
+class TemplateOnlyContentTests(unittest.TestCase):
+    def test_reference_repositories_are_named_only_where_allowed(self):
+        agents = (ROOT / 'AGENTS.md').read_text(encoding='utf-8')
+        block = re.search(r'<!-- template-only:start -->(.*?)<!-- template-only:end -->',
+                          agents, re.S)
+        if block is None:
+            self.skipTest('no template-only section (generated repository)')
+        names = set(re.findall(r'`[\w.-]+/([\w.-]+)`', block.group(1)))
+        self.assertTrue(names, 'the template-only section names no reference repository')
+        outside = agents.replace(block.group(0), '')
+        found = [('AGENTS.md', name) for name in sorted(names)
+                 if re.search(re.escape(name), outside, re.I)]
+        for path in sorted(ROOT.rglob('*')):
+            relative = path.relative_to(ROOT)
+            allowed = (relative.parts[0] == '.git' or '__pycache__' in relative.parts
+                       or relative.parts[:2] == ('docs', 'licenses')
+                       or relative.as_posix() == 'AGENTS.md')
+            if allowed or not path.is_file():
+                continue
+            text = path.read_text(encoding='utf-8', errors='ignore')
+            found += [(relative.as_posix(), name) for name in sorted(names)
+                      if re.search(re.escape(name), text, re.I)]
+        self.assertEqual(found, [])
