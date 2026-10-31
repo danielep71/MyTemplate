@@ -29,8 +29,9 @@ Resolves #
 ## 🔎 Final-head review
 
 <!-- After the last push, compare the reviewed commit with the current head.
-For a bot-authored PR, record my review of the final head. Procedure and
-exceptions: docs/repo_governance/PULL_REQUESTS.md. -->
+Procedure and exceptions: docs/repo_governance/PULL_REQUESTS.md. Bot pull
+requests do not use this template; record my review of their final head in a
+comment on the pull request. -->
 
 - Final PR head SHA:
 - Review type and reviewed commit SHA:
@@ -48,7 +49,7 @@ exceptions: docs/repo_governance/PULL_REQUESTS.md. -->
 ## ☑️ Checklist
 
 - [ ] The base is the default branch or the active release branch, as stated above.
-- [ ] Each linked issue has the assignee, exactly one priority label, a milestone and a target end date before the milestone's due date; this PR has no milestone, links the relevant issues and carries appropriate labels.
+- [ ] Each linked issue has the assignee, exactly one priority label, an open milestone and a target end date before the milestone's due date; this PR has no milestone, links the relevant issues and carries appropriate labels.
 - [ ] Scope is focused: no unrelated changes, local artifacts or generated output.
 - [ ] Documentation affected by the change is updated.
 - [ ] No tokens, credentials, real portfolio or client data.

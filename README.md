@@ -16,23 +16,35 @@ workbooks, such as SA-CCR, SFT, FRTB, LCR, and NSFR. It provides:
 - a security policy, Dependabot updates for the pinned Actions and the
   hash-locked Python dependencies, and optional daily traffic collection.
 
-After creating a repository with **Use this template**, follow the
-[repository setup guide](docs/setup/REPOSITORY_SETUP.md) to apply its settings.
-GitHub does not inherit repository settings from templates automatically.
-First delete the template-only section of `AGENTS.md` and point the contact links in
-`.github/ISSUE_TEMPLATE/config.yml` to the new repository: **Repository integrity**
-fails until you do, and setup needs it to pass.
+## 🚀 Start a new repository
 
-```sh
-python tools/setup_repository.py --repo OWNER/NEW-REPO
-python tools/setup_repository.py --repo OWNER/NEW-REPO --apply
-python tools/setup_repository.py --repo OWNER/NEW-REPO --check \
-  --report docs/repo_governance/SETTINGS_EVIDENCE.md
-```
+GitHub copies files from a template, not its settings. In order:
 
-Review the [settings reference](docs/repo_governance/SETTINGS.md) and its
-[JSON configuration](docs/setup/repository-settings.json). Setup requires Python 3.11+
-and GitHub CLI authentication with administrator access to the destination.
+1. Create the repository with **Use this template**.
+2. Delete the template-only section of `AGENTS.md`, with its markers, and point
+   the two contact links in `.github/ISSUE_TEMPLATE/config.yml` to the new
+   repository. **Repository integrity** fails until you do.
+3. Enable Actions and let **Repository integrity** pass on the default branch.
+4. Apply and verify the settings baseline, as the
+   [repository setup guide](docs/setup/REPOSITORY_SETUP.md) describes. It
+   needs Python 3.11+ and GitHub CLI authentication with administrator access:
+
+   ```sh
+   python tools/setup_repository.py --repo OWNER/NEW-REPO
+   python tools/setup_repository.py --repo OWNER/NEW-REPO --apply
+   python tools/setup_repository.py --repo OWNER/NEW-REPO --check \
+     --report docs/repo_governance/SETTINGS_EVIDENCE.md
+   ```
+
+5. Run **Sync issue labels** and create milestones with due dates
+   ([issue labels](docs/repo_governance/ISSUE_LABELS.md)).
+6. Optionally, enable traffic collection
+   ([traffic history](docs/repo_governance/TRAFFIC.md)).
+7. If Codex reviews your pull requests, create its environment for the new
+   repository ([pull request review](docs/repo_governance/PULL_REQUESTS.md)).
+
+The [settings reference](docs/repo_governance/SETTINGS.md) and its
+[JSON configuration](docs/setup/repository-settings.json) describe the baseline.
 
 ## 🧭 Repository governance
 
