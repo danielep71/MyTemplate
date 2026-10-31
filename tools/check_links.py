@@ -129,7 +129,8 @@ def markdown_links(text: str) -> tuple[list[str], set[str]]:
 def tracked_markdown(root: Path) -> list[Path]:
     try:
         names = subprocess.run(["git", "-C", str(root), "ls-files", "-z", "--", "*.md"],
-                               capture_output=True, text=True, check=True).stdout.split("\0")
+                               capture_output=True, text=True, encoding="utf-8",
+                               check=True).stdout.split("\0")
         return [root / name for name in names if name]
     except (OSError, subprocess.CalledProcessError):
         return [path for path in root.rglob("*.md") if ".git" not in path.relative_to(root).parts]

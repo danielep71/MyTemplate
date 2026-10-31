@@ -210,7 +210,7 @@ def catalogue_labels(root: Path) -> set[str]:
     result = subprocess.run(
         ["node", str(root / ".github/scripts/labels-sync.mjs"), "--mode", "validate",
          "--manifest", str(root / ".github/labels.json")],
-        capture_output=True, text=True, check=False,
+        capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
     )
     if result.returncode:
         raise ValueError(result.stderr.strip() or result.stdout.strip())

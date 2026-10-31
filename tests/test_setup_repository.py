@@ -257,6 +257,8 @@ class SetupTests(unittest.TestCase):
             self.assertIn('PATCH', cmd)
             self.assertEqual(cmd[-2:], ['--input', '-'])
             self.assertEqual(run.call_args.kwargs['input'], '{"has_projects": false}')
+            # gh writes UTF-8 whatever the locale code page is.
+            self.assertEqual(run.call_args.kwargs['encoding'], 'utf-8')
 
     def test_api_error_does_not_print_server_detail(self):
         result = argparse.Namespace(returncode=1, stdout='', stderr='secret token HTTP 403')
