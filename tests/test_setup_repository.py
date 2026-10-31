@@ -2,6 +2,7 @@ import argparse
 import copy
 import io
 import json
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -74,7 +75,7 @@ class SetupTests(unittest.TestCase):
     def setUp(self):
         self.api = FakeAPI()
         self.args = argparse.Namespace(repo='example/project', config=setup.CONFIG,
-                                       apply=False, check=False, update_existing=False)
+                                       apply=False, check=False, update_existing=False, report=None)
 
     def run_setup(self):
         with redirect_stdout(io.StringIO()):
@@ -191,6 +192,24 @@ class SetupTests(unittest.TestCase):
         self.api.reporting = False
         self.args.apply, self.args.check = False, True
         self.assertEqual(self.run_setup(), 1)
+
+    def test_report_records_drift_then_verification(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.args.report = Path(directory) / 'evidence' / 'settings.md'
+            self.args.check = True
+            self.assertEqual(self.run_setup(), 1)
+            drift = self.args.report.read_text(encoding='utf-8')
+            self.assertIn('- Result: **DRIFT**', drift)
+            self.assertIn('| Protect main | — | missing |', drift)
+            self.assertIn('| `has_projects` | off | on |', drift)
+            self.assertIn('| `secret_scanning` | on | not applied (public repositories only) |', drift)
+            self.args.check, self.args.apply = False, True
+            self.assertEqual(self.run_setup(), 0)
+            verified = self.args.report.read_text(encoding='utf-8')
+            self.assertIn('- Result: **VERIFIED**', verified)
+            self.assertIn('| Protect main | 5 | matches |', verified)
+            self.assertIn('| `vulnerability_alerts` | on | on |', verified)
+        self.assertEqual([w for w in self.api.writes if 'evidence' in w[1]], [])
 
     def test_duplicate_names_rejected_before_writes(self):
         name = setup.load_config(setup.CONFIG)['rulesets'][0]['name']

@@ -60,13 +60,18 @@ back the result. Protection is installed before automatic branch deletion is ena
 ### ③ Verify the result
 
 ```sh
-python tools/setup_repository.py --repo OWNER/NEW-REPO --check
+python tools/setup_repository.py --repo OWNER/NEW-REPO --check \
+  --report docs/repo_governance/SETTINGS_EVIDENCE.md
 ```
 
-A verified match returns **0**. Keep the output in the repository's **setup
-record**: an issue, pull request, or document that holds setup evidence such as
-check output, observation dates, and ruleset IDs. Running apply again against
-matching settings makes no writes.
+A verified match returns **0**. `--report` writes the repository's **setup
+record**: a dated Markdown file with each managed setting and security feature as
+configured and as GitHub reports it, each managed ruleset with its ID and status,
+and any unmanaged or inherited rulesets. `docs/repo_governance/SETTINGS_EVIDENCE.md`
+is the conventional place to commit it in a generated repository; add anything the
+script cannot read, such as decisions and exceptions, below it. `--report` works with
+preview, `--check` and `--apply`; after apply it records the read-back state.
+Running apply again against matching settings makes no writes.
 
 <details>
 <summary><strong>⚙️ Advanced: reconcile an existing named ruleset</strong></summary>

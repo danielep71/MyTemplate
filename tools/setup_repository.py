@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Apply the portable baseline through an authenticated GitHub CLI (github.com)."""
 import argparse
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -201,6 +202,57 @@ def report_unmanaged(call, root, current, config):
               'ruleset replaces it.')
 
 
+def evidence(call, repo, config, metadata, plan, mode, now=None):
+    """A dated Markdown record of the managed settings as GitHub reports them."""
+    root = f'repos/{repo}'
+    stamp = (now or datetime.now(timezone.utc)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    public = metadata.get('visibility') == 'public'
+    differs = {endpoint for method, endpoint, _ in plan if method == 'PUT' and '/rulesets/' in endpoint}
+    created = {payload['name'] for method, _, payload in plan if method == 'POST'}
+    current = pages(call, root + '/rulesets?includes_parents=false')
+    inherited = [r for r in pages(call, root + '/rulesets?includes_parents=true')
+                 if r.get('source_type') != 'Repository']
+    managed = {rule['name'] for rule in config['rulesets']}
+
+    def cell(value):
+        return 'on' if value is True else 'off' if value is False else str(value)
+
+    lines = ['# Repository settings evidence', '',
+             f'- Checked: **{stamp}** with `tools/setup_repository.py` ({mode})',
+             f'- Destination: `{metadata["full_name"]}`; visibility: {metadata["visibility"]}; '
+             f'default branch: `{metadata["default_branch"]}`',
+             f'- Result: **{"VERIFIED" if not plan else "DRIFT"}**', '',
+             '## General settings', '', '| Setting | Configured | Observed |', '| --- | --- | --- |']
+    lines += [f'| `{key}` | {cell(value)} | {cell(metadata.get(key))} |'
+              for key, value in config['repository'].items()]
+    lines += ['', '## Security features', '', '| Feature | Configured | Observed |', '| --- | --- | --- |']
+    for feature, value in config['security'].items():
+        observed = ('not applied (public repositories only)' if SECURITY_PUBLIC_ONLY[feature] and not public
+                    else cell(security_state(call, root, metadata, feature)))
+        lines.append(f'| `{feature}` | {cell(value)} | {observed} |')
+    lines += ['', '## Managed rulesets', '', '| Ruleset | ID | Status |', '| --- | --- | --- |']
+    for rule in config['rulesets']:
+        match = next((r for r in current if r['name'] == rule['name']), None)
+        if rule['name'] in created or match is None:
+            lines.append(f'| {rule["name"]} | — | missing |')
+        else:
+            status = 'differs' if f'{root}/rulesets/{match["id"]}' in differs else 'matches'
+            lines.append(f'| {rule["name"]} | {match["id"]} | {status} |')
+    unmanaged = [r for r in current if r.get('source_type', 'Repository') == 'Repository'
+                 and r['name'] not in managed]
+    lines += ['', '## Other rules', '',
+              f'- Unmanaged repository rulesets: {", ".join(r["name"] for r in unmanaged) or "none"}',
+              f'- Inherited rulesets: {", ".join(r["name"] for r in inherited) or "none"}',
+              '', 'Unmanaged settings are outside this record.']
+    return '\n'.join(lines) + '\n'
+
+
+def write_evidence(path, text):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding='utf-8', newline='\n')
+    print(f'Evidence written to {path}')
+
+
 def check_prerequisites(call, repo, metadata, config):
     root = f'repos/{repo}'
     branch = call('GET', root + '/branches/' + quote(metadata['default_branch'], safe=''))
@@ -225,6 +277,10 @@ def run(args, call=api):
         raise SetupError('Destination must be an explicit owner/repository on github.com.')
     config = load_config(args.config)
     metadata, plan = inspect(call, args.repo, config)
+    mode = 'apply' if args.apply else 'check' if args.check else 'preview'
+    report = getattr(args, 'report', None)
+    if report and (not args.apply or not plan):
+        write_evidence(report, evidence(call, args.repo, config, metadata, plan, mode))
     if not plan:
         print('VERIFIED: all documented settings match. Unmanaged settings are outside this verification.')
         return 0
@@ -245,7 +301,9 @@ def run(args, call=api):
     for method, endpoint, payload in plan:
         call(method, endpoint, payload)
         print(f'Applied {method} {endpoint}')
-    _, remaining = inspect(call, args.repo, config, report=False)
+    metadata, remaining = inspect(call, args.repo, config, report=False)
+    if report:
+        write_evidence(report, evidence(call, args.repo, config, metadata, remaining, mode))
     if remaining:
         raise SetupError('Read-back verification failed; rerun preview to inspect remaining differences.')
     print('VERIFIED: all documented settings match after apply.')
@@ -260,6 +318,7 @@ def main():
     mode.add_argument('--apply', action='store_true', help='Apply changes, then verify')
     mode.add_argument('--check', action='store_true', help='Read-only verification; exit 1 for drift')
     parser.add_argument('--update-existing', action='store_true', help='Allow replacement of differing named rulesets')
+    parser.add_argument('--report', type=Path, help='Write a dated Markdown evidence record of the managed settings')
     args = parser.parse_args()
     if args.update_existing and not args.apply:
         parser.error('--update-existing requires --apply')
