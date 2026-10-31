@@ -27,11 +27,12 @@ FORM_PRIORITIES = {"bug.yml": "P2", "enhancement.yml": "P3", "documentation.yml"
                    "security-contact.yml": "P2"}
 # Forms whose reporter proposes the target end date; triage adds it to the others.
 TARGET_DATE_FORMS = ("bug.yml", "enhancement.yml", "documentation.yml")
-# The planning line triage writes, or the field an issue form renders.
-PLANNED_TARGET = re.compile(
-    r"^\s*[-*]\s*Target end date:\s*(\S+)(?:\s+\(Europe/Rome\))?\s*$", re.I | re.M)
+# The planning line triage writes, or the field an issue form renders. Each
+# captures its whole value, so an invalid line never falls back to the form.
+PLANNED_TARGET = re.compile(r"^[ \t]*[-*][ \t]*Target end date:[ \t]*(.*?)[ \t]*$", re.I | re.M)
 FORM_TARGET = re.compile(
-    r"^###\s+(?:🗓️\s*)?Target end date(?:\s*\(Europe/Rome\))?\s*$\n\s*(\S+)", re.I | re.M)
+    r"^###\s+(?:🗓️\s*)?Target end date(?:\s*\(Europe/Rome\))?\s*$\n\s*(.*?)[ \t]*$", re.I | re.M)
+ROME_SUFFIX = re.compile(r"\s*\(Europe/Rome\)$", re.I)
 DEPENDENCY_STATUS_WORDS = re.compile(r"block|ready|waiting|depend|on[ -]hold|prerequisite", re.I)
 HEADING = re.compile(r"^#{2,3}\s+(.*)$")
 EXTERNAL = re.compile(r"^\s*(?:[-*]\s*)?external condition:\s*\S", re.I)
@@ -98,7 +99,7 @@ def references(lines: Iterable[str], repository: str, own: int) -> set[int]:
 def target_end_date(body: str) -> str | None:
     """Read the planning line or the issue-form field without guessing a date."""
     match = PLANNED_TARGET.search(body) or FORM_TARGET.search(body)
-    return match.group(1) if match else None
+    return ROME_SUFFIX.sub("", match.group(1)) if match else None
 
 
 def iso_date(text: str | None) -> dt.date | None:

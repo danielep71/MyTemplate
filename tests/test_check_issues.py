@@ -78,6 +78,18 @@ class TargetDateTests(unittest.TestCase):
         body = "### 🗓️ Target end date (Europe/Rome)\n\n2026-11-04\n\n" + READY
         self.assertEqual(check_issues.target_end_date(body), "2026-11-04")
         self.assertEqual(rules([issue(1, body=body, target=None)]), [])
+        self.assertEqual(rules([issue(1, body="### 🗓️ Target end date (Europe/Rome)\n\n_No response_\n\n"
+                                       + READY, target=None)]), [(1, "target-date")])
+
+    def test_planning_line_takes_precedence_even_when_invalid(self) -> None:
+        form = "### 🗓️ Target end date (Europe/Rome)\n\n2026-11-04\n\n" + READY
+        self.assertEqual(rules([issue(1, body=form, target="2026-11-10")]), [])
+        self.assertEqual(check_issues.target_end_date(PLANNING.format("2026-11-10") + form),
+                         "2026-11-10")
+        for value in ("to be decided", "", "2026-11-10 or later"):
+            with self.subTest(value=value):
+                body = f"- Target end date: {value}\n\n" + form
+                self.assertEqual(rules([issue(1, body=body, target=None)]), [(1, "target-date")])
 
     def test_target_date_must_be_before_the_milestone_due_date(self) -> None:
         self.assertEqual(rules([issue(1, milestone_due="2026-11-05")]), [])
