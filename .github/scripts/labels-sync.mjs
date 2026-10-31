@@ -631,7 +631,7 @@ async function runSelfTest(manifestPath, policyPath) {
 }
 
 // What the run knew before a failure, so that the failure summary reports it.
-const runState = { summaryBase: null, changes: null, applying: false };
+const runState = { summaryBase: null, changes: null, applying: false, verified: null };
 
 async function main() {
   const options = parseArguments(process.argv.slice(2));
@@ -684,8 +684,11 @@ async function main() {
   const after = await listLiveLabels(options.repository, process.env.GITHUB_TOKEN);
   const remaining = planChanges(desired, after, { prune: manifest.prune });
   const verified = remaining.length === 0;
+  if (!verified) {
+    runState.verified = false;
+    throw new Error(`Post-run verification found ${remaining.length} remaining difference(s)`);
+  }
   await publishSummary(renderSummary({ mode: "reconcile", ...summaryBase, changes, verified }));
-  if (!verified) throw new Error(`Post-run verification found ${remaining.length} remaining difference(s)`);
 }
 
 main().catch(async error => {
@@ -702,6 +705,7 @@ main().catch(async error => {
         domains: []
       }),
       changes: runState.changes,
+      verified: runState.verified,
       partial: runState.applying,
       error: message
     }));

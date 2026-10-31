@@ -16,3 +16,17 @@ class CatalogueDocumentationTests(unittest.TestCase):
         expected = [(label['name'], label['color'], label['description'])
                     for label in manifest['core']]
         self.assertEqual(rows, expected)
+
+    def test_documented_label_counts_match_the_template_selection(self):
+        manifest = json.loads((ROOT / '.github/labels.json').read_text(encoding='utf-8'))
+        expected = str(len(manifest['core']))
+        pattern = re.compile(r'labels-(\d+)-|\b(\d+) (?:issue )?labels\b', re.I)
+        counts = []
+        for path in sorted(ROOT.glob('**/*.md')):
+            if '.git' in path.parts:
+                continue
+            text = path.read_text(encoding='utf-8')
+            counts += [(path.relative_to(ROOT).as_posix(), badge or prose)
+                       for badge, prose in pattern.findall(text)]
+        self.assertTrue(counts, 'no documented label counts found')
+        self.assertEqual([item for item in counts if item[1] != expected], [])

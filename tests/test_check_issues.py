@@ -7,13 +7,15 @@ import io
 import json
 import tempfile
 import unittest
+import sys
 import unittest.mock
 from pathlib import Path
 
-import check_issues
-from check_issues import Issue
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+
+import check_issues  # noqa: E402
+from check_issues import Issue  # noqa: E402
 REPOSITORY = "example/project"
 BLOCKED_LABEL = check_issues.BLOCKED
 READY = "## Dependencies and blocking status\n\n**Ready to start**: none.\n"
@@ -102,7 +104,6 @@ class DependencyTests(unittest.TestCase):
         self.assertEqual(rules([issue(2, "P3", BLOCKED_LABEL, body=blocked_by(22, 7))],
                                pulls=frozenset({22})),
                          [(2, "dependencies"), (2, "blocked")])
-
 
 
 class ConfigTests(unittest.TestCase):

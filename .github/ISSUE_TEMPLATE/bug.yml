@@ -11,14 +11,14 @@ body:
     id: summary
     attributes:
       label: "Summary and impact"
-      description: "Describe the problem or proposed change."
+      description: "Describe the defect and its impact."
     validations:
       required: true
   - type: textarea
     id: evidence
     attributes:
       label: "Evidence and reproduction"
-      description: "Give the exact commit, reproduction steps, and expected versus actual behavior where applicable."
+      description: "Give the exact commit, reproduction steps, and expected versus actual behavior."
     validations:
       required: true
   - type: textarea

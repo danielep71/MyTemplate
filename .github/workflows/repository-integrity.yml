@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   repository-integrity:
     name: Repository integrity
@@ -19,21 +23,24 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Test repository setup
-        run: python3 -m unittest discover -s tests -v
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: Run repository tests
+        run: python -m unittest discover -s tests -v
       - name: Test label automation
         run: |
           node .github/scripts/labels-sync.mjs --self-test
           node .github/scripts/labels-sync.mjs --mode validate
           node .github/scripts/labels-drift.mjs --self-test
-          python3 -m unittest discover -s tools -p 'test_check_issues.py' -v
-          python3 tools/check_issues.py --check-config
+          python tools/check_issues.py --check-config
       - name: Validate template contents
-        shell: bash
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           test -s README.md
+          test -s LICENSE
           test -s docs/repo_governance/SETTINGS.md
           if [[ -n "$BASE_SHA" && ! "$BASE_SHA" =~ ^0+$ ]]; then
             git diff --check "$BASE_SHA" HEAD

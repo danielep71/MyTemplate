@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Check issue metadata and dependency status that issue forms cannot enforce.
 
-Read-only: the check never changes an issue. It reports findings for the
-me to resolve by hand (docs/repo_governance/ISSUE_LABELS.md).
+Read-only: the check never changes an issue. It reports findings for me to
+resolve by hand (docs/repo_governance/ISSUE_LABELS.md).
 """
 
 from __future__ import annotations

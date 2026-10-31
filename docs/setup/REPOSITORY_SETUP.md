@@ -9,7 +9,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](#-before-you-start)
 [![Verification](https://img.shields.io/badge/Verification-Read_back_after_apply-00875A?style=flat-square)](#-verification-and-recovery)
 
-[Prepare](#-before-you-start) · [Launch](#-launch-sequence) · [Coverage](#-what-this-applies) · [Clean up](#-after-launch-keep-adapt-or-remove) · [Maintain](#-maintain-the-baseline)
+[Prepare](#-before-you-start) · [Launch](#-launch-sequence) · [Labels](#-initialize-issue-labels) · [Coverage](#-what-this-applies) · [Clean up](#-after-launch-keep-adapt-or-remove) · [Maintain](#-maintain-the-baseline)
 
 </div>
 
@@ -26,8 +26,8 @@
 | --- | --- |
 | **Runtime** | Python **3.10+** and a recent [GitHub CLI](https://cli.github.com/) are installed. |
 | **Destination** | The new repository exists and contains the template files. |
-| **Identity** | `gh auth login --hostname github.com` is complete using an account with administrator access to the destination. |
-| **Token permissions** | A fine-grained token has repository **Administration: write**, **Contents: read**, and **Checks: read**. A normal Actions `GITHUB_TOKEN` cannot administer these rulesets. Never commit tokens. |
+| **Identity** | `gh auth status --hostname github.com` shows an account with administrator access to the destination. Sign in with `gh auth login --hostname github.com`, or set `GH_TOKEN` to a fine-grained token. |
+| **Token permissions** | A fine-grained token has destination repository **Administration: write**, **Contents: read**, and **Checks: read**. A workflow `GITHUB_TOKEN` cannot administer these rulesets. Never commit tokens. |
 | **Integrity check** | Actions is enabled and `Repository integrity` has succeeded on the **current default-branch HEAD**. |
 | **Workflow coverage** | The required job runs on every relevant PR without path filters. The supplied workflow runs on all branches, including a renamed default branch. |
 | **Merge methods** | Repository-level merge commits and squash merging are enabled. |
@@ -62,8 +62,10 @@ back the result. Protection is installed before automatic branch deletion is ena
 python tools/setup_repository.py --repo OWNER/NEW-REPO --check
 ```
 
-A verified match returns **0**. Retain the result in your launch record before
-considering cleanup. Running apply again against matching settings makes no writes.
+A verified match returns **0**. Keep the output in the repository's **setup
+record**: an issue, pull request, or document that holds setup evidence such as
+check output, observation dates, and ruleset IDs. Running apply again against
+matching settings makes no writes.
 
 <details>
 <summary><strong>⚙️ Advanced: reconcile an existing named ruleset</strong></summary>
@@ -84,6 +86,10 @@ The default JSON path is relative to the script, so it also works from another
 working directory. Use `--config PATH` for a reviewed baseline with the same schema.
 
 </details>
+
+## 🏷️ Initialize issue labels
+
+After creating a repository, run **Actions → Sync issue labels → Run workflow** on the default branch. This installs the 20 labels defined in this repository, including exact descriptions and colours. See [labels and automation](../repo_governance/ISSUE_LABELS.md) for triage rules and instructions for replacing my default assignee account in a generated repository. Keep the label configuration, scripts, workflows, forms, and triage tests after setup; they are ongoing automation, not bootstrap leftovers.
 
 ## 🛡️ What this applies
 
@@ -115,6 +121,8 @@ inherited policies may impose additional restrictions.
 | File or setting | Action in the new repository | Reason / dependency |
 | --- | --- | --- |
 | `README.md` | **Adapt** | Replace the MyTemplate title and introduction with the project's purpose, installation and usage. Keep or replace setup links deliberately. |
+| `LICENSE` | **Keep or replace** | MPL-2.0 by default. The integrity workflow requires a non-empty `LICENSE`. |
+| `docs/licenses/` | **Keep** | Notice and license text for the files listed in `THIRD_PARTY_NOTICES.txt`, which remain under MPL-2.0 whatever license you choose. |
 | `docs/repo_governance/SETTINGS.md` | **Keep and maintain** | Records the adopted baseline. The integrity workflow explicitly requires this file. |
 | `docs/setup/repository-settings.json` | **Keep** | Enables future drift checks and reapplication. The setup tests read this file. |
 | `tools/setup_repository.py` | **Keep** | Provides preview, apply and verification for future maintenance. |
@@ -129,13 +137,14 @@ Use this route only in a **generated project** where you no longer want the setu
 utilities. Keep them in the source template so future repositories receive them.
 
 1. Run `--check` successfully and preserve the result and adopted configuration in
-   the project's handover record.
+   the setup record.
 2. Create a normal task branch and PR for cleanup. Protection remains active after
    setup; do not rely on direct pushes to the default branch.
-3. In that same PR, replace the workflow's **Test repository setup** step with
-   meaningful project checks. Keep the job name **`Repository integrity`**, its
-   coverage of all relevant PRs, and the existing required-document and whitespace
-   checks. If keeping test discovery, ensure real project tests remain and run.
+3. In that same PR, add meaningful project checks to the workflow. Keep the job
+   name **`Repository integrity`**, its coverage of all relevant PRs, the
+   **Run repository tests** step, and the existing required-document and
+   whitespace checks. That step also runs the label-catalogue and issue-triage
+   tests in `tests/`, which stay after the setup tests are removed.
 4. Remove only the retired setup files, together:
 
    ```text
@@ -197,7 +206,3 @@ and settings-maintenance process instead.
 · [GitHub CLI API](https://cli.github.com/manual/gh_api)
 
 [↑ Back to top](#-repository-setup)
-
-## 🏷️ Initialize issue labels
-
-After creating a repository, run **Actions → Sync issue labels → Run workflow** on the default branch. This installs the 20 labels defined in this repository, including exact descriptions and colours. See [labels and automation](../repo_governance/ISSUE_LABELS.md) for triage rules and instructions for replacing my default assignee account in a generated repository. Keep the label configuration, scripts, workflows, forms, and triage tests after setup; they are ongoing automation, not bootstrap leftovers.
