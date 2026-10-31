@@ -141,9 +141,11 @@ class WorkflowControlTests(unittest.TestCase):
 
     def test_code_scanning_covers_each_language_and_skips_when_unavailable(self):
         document = workflows()['codeql.yml']
-        for event in ('push', 'pull_request'):
-            with self.subTest(event=event):
-                self.assertEqual(document['on'][event], {'branches': ['main', 'release/**']})
+        # The default branch is listed by name and may be renamed; Repository
+        # integrity checks that it is present (see the next test).
+        self.assertEqual(document['on']['push'], document['on']['pull_request'])
+        self.assertEqual(set(document['on']['push']), {'branches'})
+        self.assertIn('release/**', document['on']['push']['branches'])
         self.assertIn('schedule', document['on'])
         jobs = document['jobs']
         gate = jobs['availability']['steps'][0]
@@ -157,6 +159,17 @@ class WorkflowControlTests(unittest.TestCase):
         uses = [step['uses'].split('@')[0] for step in analyze['steps'] if 'uses' in step]
         self.assertEqual(uses, ['actions/checkout', 'github/codeql-action/init',
                                 'github/codeql-action/analyze'])
+
+    def test_integrity_checks_that_code_scanning_covers_the_default_branch(self):
+        name, job_id = REQUIRED_JOB
+        steps = workflows()[name]['jobs'][job_id]['steps']
+        step = next(step for step in steps
+                    if step.get('name') == 'Check that CodeQL runs on the default branch')
+        self.assertEqual(step['env'], {'DEFAULT_BRANCH': '${{ github.event.repository.default_branch }}'})
+        self.assertIn('.github/workflows/codeql.yml', step['run'])
+        # The parser it imports is installed by an earlier step.
+        install = next(i for i, s in enumerate(steps) if s.get('name') == 'Install pinned configuration parser')
+        self.assertLess(install, steps.index(step))
 
     def test_every_pip_install_is_hash_locked(self):
         installs = 0
