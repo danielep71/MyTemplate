@@ -13,7 +13,8 @@ workbooks, such as SA-CCR, SFT, FRTB, LCR, and NSFR. It provides:
 - quality gates: Ruff, strict mypy and actionlint, plus tests that hold the
   workflows to pinned actions, explicit permissions and the required check, and
   link checks: relative links and anchors on every change, external links weekly;
-- a security policy, Dependabot updates for the pinned Actions and the
+- a security policy, CodeQL code scanning of the Python, JavaScript and
+  workflow code, Dependabot updates for the pinned Actions and the
   hash-locked Python dependencies, and optional daily traffic collection.
 
 ## 🚀 Start a new repository

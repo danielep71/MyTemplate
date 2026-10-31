@@ -157,8 +157,12 @@ The executable configuration is [repository-settings.json](../setup/repository-s
 See [REPOSITORY_SETUP.md](../setup/REPOSITORY_SETUP.md) for preview, apply and verification commands.
 The script covers the four general differences, the five security features and the
 five rulesets documented above. It applies the public-only features only on a public
-destination and names them in a note for any other visibility. It does not
-configure CodeQL or other code scanning.
+destination and names them in a note for any other visibility. Code scanning
+is not part of this baseline: the CodeQL workflow
+(`.github/workflows/codeql.yml`) runs it with advanced setup, so leave GitHub's
+default setup off, which would reject the workflow's results. On a private
+repository the workflow needs GitHub Code Security and the repository variable
+`CODE_SCANNING` set to `enabled`; without them it skips the analysis.
 `Protect main` targets `~DEFAULT_BRANCH`, so it follows the default branch under
 any name. The script matches rulesets by name: renaming one in the configuration
 creates a new ruleset and leaves the old one in place.
