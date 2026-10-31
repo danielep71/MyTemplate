@@ -104,6 +104,17 @@ jobs:
             fi
           done < <(sed -n -E 's/^[[:space:]]*url:[[:space:]]*"?([^"]+)"?[[:space:]]*$/\1/p' .github/ISSUE_TEMPLATE/config.yml)
           exit "$failed"
+      - name: Check that Dependabot targets existing branches
+        run: |
+          # fetch-depth: 0 fetches every branch, so each target is a local ref.
+          failed=0
+          while read -r branch; do
+            if ! git rev-parse --verify --quiet "refs/remotes/origin/${branch}" > /dev/null; then
+              echo "::error file=.github/dependabot.yml::target-branch ${branch} does not exist; set it to the active release branch or remove it."
+              failed=1
+            fi
+          done < <(sed -n -E 's/^[[:space:]]*target-branch:[[:space:]]*"?([^"[:space:]]+)"?[[:space:]]*$/\1/p' .github/dependabot.yml | sort -u)
+          exit "$failed"
       - name: Validate template contents
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
