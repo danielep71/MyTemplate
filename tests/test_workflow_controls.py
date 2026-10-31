@@ -141,9 +141,11 @@ class WorkflowControlTests(unittest.TestCase):
 
     def test_code_scanning_covers_each_language_and_skips_when_unavailable(self):
         document = workflows()['codeql.yml']
-        for event in ('push', 'pull_request'):
-            with self.subTest(event=event):
-                self.assertEqual(document['on'][event], {'branches': ['main', 'release/**']})
+        # The default branch is listed by name and may be renamed; Repository
+        # integrity checks that it is present (see the next test).
+        self.assertEqual(document['on']['push'], document['on']['pull_request'])
+        self.assertEqual(set(document['on']['push']), {'branches'})
+        self.assertIn('release/**', document['on']['push']['branches'])
         self.assertIn('schedule', document['on'])
         jobs = document['jobs']
         gate = jobs['availability']['steps'][0]
