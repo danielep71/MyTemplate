@@ -1,0 +1,43 @@
+name: Link check
+
+# Requests every external link in the Markdown files once a week and on
+# demand. Relative links and anchors are checked offline by Repository
+# integrity (tests/test_check_links.py) on every change; external sites change
+# without a commit, so this check runs on a schedule and never blocks a merge.
+# Links into this repository are skipped: the offline check covers them.
+
+on:
+  schedule:
+    # Weekly, off the hour; GitHub may start scheduled runs late.
+    - cron: "43 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: link-check
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  external:
+    name: External links
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out the selected ref
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Check relative links, anchors and external links
+        run: python tools/check_links.py --external

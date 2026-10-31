@@ -69,29 +69,8 @@ class DependabotTests(unittest.TestCase):
         self.assertEqual(set(yaml_list(text, 'assignees')), {assignee})
 
 
-MARKDOWN_LINK = re.compile(r'\]\(([^)\s]+)\)|^\[[^\]]+\]:\s*(\S+)', re.M)
-FENCE = re.compile(r'^```.*?^```', re.M | re.S)
-
-
-class MarkdownLinkTests(unittest.TestCase):
-    def test_relative_links_point_to_existing_files(self):
-        checked, broken = 0, []
-        for path in sorted(ROOT.rglob('*.md')):
-            relative = path.relative_to(ROOT)
-            if relative.parts[0] == '.git':
-                continue
-            text = FENCE.sub('', path.read_text(encoding='utf-8'))
-            for inline, reference in MARKDOWN_LINK.findall(text):
-                target = (inline or reference).split('#', 1)[0]
-                if not target or re.match(r'[a-z][a-z0-9+.-]*:', target, re.I):
-                    continue
-                checked += 1
-                if not (path.parent / target).exists():
-                    broken.append((relative.as_posix(), inline or reference))
-        self.assertGreater(checked, 0)
-        self.assertEqual(broken, [])
-
-
+class MarkdownTests(unittest.TestCase):
+    # tools/check_links.py checks link targets and anchors (tests/test_check_links.py).
     def test_code_fences_close_on_a_line_of_their_own(self):
         # A closing fence followed by text does not close the block on GitHub.
         problems = []

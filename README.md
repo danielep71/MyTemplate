@@ -5,12 +5,14 @@ workbooks, such as SA-CCR, SFT, FRTB, LCR, and NSFR. It provides:
 
 - editing and Git policies for Excel workbooks, exported VBA source, and
   byte-preserved regulatory source copies;
-- issue labels, issue forms, a pull request template, triage automation, and a
-  workflow that keeps milestones on issues only;
+- issue labels, issue forms, a pull request template with a final-head review
+  procedure, triage automation, and a workflow that keeps milestones on issues
+  only;
 - a documented GitHub settings baseline, including security features, applied
   and verified by a script that also writes a dated evidence record;
 - quality gates: Ruff, strict mypy and actionlint, plus tests that hold the
-  workflows to pinned actions, explicit permissions and the required check;
+  workflows to pinned actions, explicit permissions and the required check, and
+  link checks: relative links and anchors on every change, external links weekly;
 - a security policy, Dependabot updates for the pinned Actions and the
   hash-locked Python dependencies, and optional daily traffic collection.
 

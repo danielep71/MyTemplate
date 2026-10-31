@@ -29,7 +29,8 @@ Resolves #
 ## 🔎 Final-head review
 
 <!-- After the last push, compare the reviewed commit with the current head.
-For a bot-authored PR, record my review of the final head. -->
+For a bot-authored PR, record my review of the final head. Procedure and
+exceptions: docs/repo_governance/PULL_REQUESTS.md. -->
 
 - Final PR head SHA:
 - Review type and reviewed commit SHA:
