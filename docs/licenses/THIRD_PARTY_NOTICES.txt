@@ -34,6 +34,21 @@ references, file locations, and newest-observation tracking in the traffic
 history merge.
 This notice applies to the listed files, not unrelated project files.
 
+The target end date rule was adapted from danielep71/K-NSFR
+(https://github.com/danielep71/K-NSFR) under the Mozilla Public License 2.0,
+in these files:
+
+.github/ISSUE_TEMPLATE/bug.yml
+.github/ISSUE_TEMPLATE/documentation.yml
+.github/ISSUE_TEMPLATE/enhancement.yml
+tools/check_issues.py
+tests/test_check_issues.py
+
+The license text is included in MPL-2.0.txt in this directory.
+Modifications drop the active-release milestone rule, leave the date out of
+the private security contact form, and give the planning line precedence over
+the form field.
+
 The following file was adapted from danielep71/K-FRTB-SA
 (https://github.com/danielep71/K-FRTB-SA) under the MIT License:
 

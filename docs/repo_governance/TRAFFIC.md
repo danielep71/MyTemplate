@@ -159,8 +159,9 @@ with the one before (`traffic_history.py alert`) and opens one issue, titled
 At most one issue is opened per snapshot date: the job skips a date whose
 issue exists, open or closed. The issue is assigned to the issue-form account,
 labelled `P3` and `repository`, filed under the open milestone with the
-earliest due date, and carries a dependency section, so it passes **Issue
-triage**. The job needs at least one open milestone with a due date.
+earliest due date, and carries a dependency section and a target end date
+(seven days after the snapshot, or the day before the milestone's due date if
+that is earlier), so it passes **Issue triage**. The job needs at least one open milestone with a due date.
 
 The job uses the workflow token with `issues: write` and `contents: read`. It
 has no environment, so it never receives `TRAFFIC_TOKEN`, and it runs only

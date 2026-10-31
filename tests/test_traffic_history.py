@@ -16,6 +16,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 
+import check_issues  # noqa: E402
 import traffic_history  # noqa: E402
 from traffic_history import DAILY, PATHS, REFERRERS, SNAPSHOTS, TrafficError  # noqa: E402
 
@@ -395,10 +396,25 @@ class AlertTests(unittest.TestCase):
             self.assertEqual(issue["title"], "Traffic alert: 2026-10-14")
             self.assertIn("views spike, clones spike, stars increased.", issue["body"])
             self.assertIn("| Stars | 2 | 1 |", issue["body"])
-            for line in ("- Planned start: **2026-10-14**.", "- Target completion: **2026-10-21**.",
-                         "- Milestone target: **2026-12-20**.",
+            for line in ("- Planned start: 2026-10-14 (UTC collection date)",
+                         "- Target end date: 2026-10-21 (Europe/Rome)",
+                         "- Milestone due date: 2026-12-20",
                          "## Dependencies and blocking status\n\nNone."):
                 self.assertIn(line, issue["body"])
+
+    def test_alert_issue_passes_issue_triage(self) -> None:
+        for due, target in (("2026-12-20", "2026-10-21"), ("2026-10-18", "2026-10-17")):
+            with self.subTest(due=due), workspace() as ws:
+                for day, views in (("2026-10-13", 50), ("2026-10-14", 150)):
+                    ws.collect([(day, views, 1)], clones=[(day, 1, 1)])
+                    ws.merge(f"{day}T06:00:00")
+                issue = traffic_history.alert(ws.data, due)
+                assert issue is not None
+                self.assertEqual(check_issues.target_end_date(issue["body"]), target)
+                candidate = check_issues.Issue(1, "open", ("P3", "repository"), ("me",), "v1",
+                                               issue["body"], due)
+                self.assertEqual(check_issues.audit([candidate], {1: "open"}, "o/r",
+                                                    assignee="me"), [])
 
     def test_a_spike_needs_double_and_the_minimum_growth(self) -> None:
         with workspace() as ws:

@@ -489,7 +489,9 @@ def alert(data: Path, milestone_due: str) -> dict[str, str] | None:
         return (f"| {name} | {current[key] or 'not recorded'} "
                 f"| {previous[key] or 'not recorded'} |")
 
-    target = (date.fromisoformat(day) + timedelta(days=ALERT_DAYS)).isoformat()
+    # Issue triage requires a target end date before the milestone's due date.
+    target = min(date.fromisoformat(day) + timedelta(days=ALERT_DAYS),
+                 date.fromisoformat(milestone_due) - timedelta(days=1)).isoformat()
     body = [
         "## Objective", "",
         f"Find out what drove the traffic recorded on {day}: "
@@ -508,10 +510,11 @@ def alert(data: Path, milestone_due: str) -> dict[str, str] | None:
         "forum, newsletter or another project) and which page drew the visits.",
         "- [ ] What was found, and any follow-up issue, is recorded in a Resolution.", "",
         "## Dependencies and blocking status", "", "None.", "",
-        "## Schedule", "",
-        f"- Planned start: **{day}**.", f"- Target completion: **{target}**.",
-        f"- Milestone target: **{milestone_due}**.", "",
-        "UTC collection date; dates are not evidence of completion.",
+        "## Planning", "",
+        f"- Planned start: {day} (UTC collection date)",
+        f"- Target end date: {target} (Europe/Rome)",
+        f"- Milestone due date: {milestone_due}", "",
+        "Dates are not evidence of completion.",
     ]
     return {"title": f"Traffic alert: {day}", "body": "\n".join(body) + "\n"}
 

@@ -80,6 +80,15 @@ body:
     validations:
       required: true
 
+  - type: input
+    id: target_end_date
+    attributes:
+      label: "🗓️ Target end date (Europe/Rome)"
+      description: ISO calendar date YYYY-MM-DD, earlier than the due date of the milestone. Triage checks it against the milestone it assigns.
+      placeholder: "2026-12-31"
+    validations:
+      required: true
+
   - type: textarea
     id: dependencies
     attributes:
