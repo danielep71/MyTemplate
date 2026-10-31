@@ -17,8 +17,9 @@ repository's GitHub page. The report stays visible only to you and the people
 who manage the repository's security until an advisory is published.
 
 If the page has no **Report a vulnerability** button, for example because the
-repository is private, open an issue that asks me for a private channel and
-contains no vulnerability details.
+repository is private, open an issue with the **🔒 Private security contact**
+form. It asks only how to reach you; I reply with a private channel. Never put
+vulnerability details in the issue.
 
 Include:
 
