@@ -82,6 +82,12 @@ Replacement removes additional rules or bypasses inside that named ruleset.
 Rulesets with other names and inherited organization rules remain unchanged.
 Duplicate managed names are rejected.
 
+When you adopt an existing repository, its rulesets may cover the same branches
+and tags under other names. The preview names every such unmanaged ruleset with
+its target, ref patterns and enforcement. It stays active after apply, with its
+own rules and bypasses, so delete the ones that a managed ruleset replaces in
+**Settings → Rules → Rulesets**. The script never deletes a ruleset.
+
 The destination is always explicit; it is never inferred from the current directory.
 The default JSON path is relative to the script, so it also works from another
 working directory. Use `--config PATH` for a reviewed baseline with the same schema.

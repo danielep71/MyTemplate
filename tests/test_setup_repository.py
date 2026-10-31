@@ -105,6 +105,16 @@ class SetupTests(unittest.TestCase):
         self.run_setup()
         self.assertEqual(self.api.rules[0]['name'], 'Other rule')
 
+    def test_preview_names_unmanaged_rulesets_without_writing(self):
+        self.api.rules = [{'name': 'main', 'id': 10, 'source_type': 'Repository', 'target': 'branch',
+                           'enforcement': 'active',
+                           'conditions': {'ref_name': {'include': ['~DEFAULT_BRANCH'], 'exclude': []}}}]
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(setup.run(self.args, self.api), 0)
+        self.assertIn('unmanaged ruleset "main" (branch: ~DEFAULT_BRANCH; active)', output.getvalue())
+        self.assertEqual(self.api.writes, [])
+
     def test_duplicate_names_rejected_before_writes(self):
         name = setup.load_config(setup.CONFIG)['rulesets'][0]['name']
         self.api.rules = [{'name': name, 'id': 1}, {'name': name, 'id': 2}]

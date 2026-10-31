@@ -84,7 +84,7 @@ def load_config(path):
     return value
 
 
-def inspect(call, repo, config):
+def inspect(call, repo, config, report=True):
     root = f'repos/{repo}'
     metadata = call('GET', root)
     if metadata.get('archived') or metadata.get('disabled'):
@@ -95,8 +95,10 @@ def inspect(call, repo, config):
     inherited = pages(call, root + '/rulesets?includes_parents=true')
     print(f'Destination: {metadata["full_name"]}; visibility: {metadata["visibility"]}; '
           f'default branch: {metadata["default_branch"]}')
-    if any(r.get('source_type') != 'Repository' for r in inherited):
+    if report and any(r.get('source_type') != 'Repository' for r in inherited):
         print('NOTE: inherited rules also apply; they are not modified or certified by this script.')
+    if report:
+        report_unmanaged(call, root, current, config)
     plan = []
     for desired in config['rulesets']:
         matches = [r for r in current if r['name'] == desired['name']]
@@ -114,6 +116,21 @@ def inspect(call, repo, config):
     if changes:
         plan.append(('PATCH', root, changes))
     return metadata, plan
+
+
+def report_unmanaged(call, root, current, config):
+    """Name repository rulesets outside the baseline; they stay active alongside it."""
+    managed = {rule['name'] for rule in config['rulesets']}
+    for ruleset in current:
+        if ruleset.get('source_type', 'Repository') != 'Repository' or ruleset['name'] in managed:
+            continue
+        detail = call('GET', f'{root}/rulesets/{ruleset["id"]}')
+        refs = ', '.join(((detail.get('conditions') or {}).get('ref_name') or {}).get('include') or [])
+        print(f'NOTE: unmanaged ruleset "{ruleset["name"]}" '
+              f'({detail.get("target", "unknown target")}: {refs or "no ref conditions"}; '
+              f'{detail.get("enforcement", "unknown enforcement")}) stays active. This script '
+              'never changes or deletes it; delete it in the repository settings if a managed '
+              'ruleset replaces it.')
 
 
 def check_prerequisites(call, repo, metadata, config):
@@ -158,7 +175,7 @@ def run(args, call=api):
     for method, endpoint, payload in plan:
         call(method, endpoint, payload)
         print(f'Applied {method} {endpoint}')
-    _, remaining = inspect(call, args.repo, config)
+    _, remaining = inspect(call, args.repo, config, report=False)
     if remaining:
         raise SetupError('Read-back verification failed; rerun preview to inspect remaining differences.')
     print('VERIFIED: all documented settings match after apply.')
