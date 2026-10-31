@@ -16,7 +16,13 @@ jobs:
   repository-integrity:
     name: Repository integrity
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
+    env:
+      # The quality-gate tests fail instead of skipping when a tool is missing.
+      REQUIRE_QUALITY_TOOLS: "1"
+      # actionlint release and the SHA-256 of its Linux x86_64 archive.
+      ACTIONLINT_VERSION: "1.7.12"
+      ACTIONLINT_LINUX_AMD64_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
     steps:
       - name: Check out candidate
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,8 +35,41 @@ jobs:
           python-version: "3.13"
       - name: Install pinned configuration parser
         run: python -m pip install --disable-pip-version-check -r .github/requirements.txt
+      - name: Install hash-locked Python quality tools
+        run: |
+          python -m pip install \
+            --disable-pip-version-check \
+            --only-binary=:all: \
+            --require-hashes \
+            -r tools/requirements-quality-ci.txt
+      - name: Install checksum-verified actionlint
+        run: |
+          validator_dir="${RUNNER_TEMP}/actionlint-${ACTIONLINT_VERSION}"
+          archive="${validator_dir}/actionlint.tar.gz"
+          mkdir -p "$validator_dir"
+          curl \
+            --fail \
+            --location \
+            --proto '=https' \
+            --retry 3 \
+            --retry-all-errors \
+            --show-error \
+            --silent \
+            --tlsv1.2 \
+            --output "$archive" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          printf '%s  %s\n' "$ACTIONLINT_LINUX_AMD64_SHA256" "$archive" \
+            | sha256sum --check --strict
+          tar --no-same-owner -xzf "$archive" -C "$validator_dir" actionlint
+          echo "$validator_dir" >> "$GITHUB_PATH"
       - name: Run repository tests
         run: python -m unittest discover -s tests -v
+      - name: Lint Python tooling (ruff)
+        run: ruff check --no-cache tools tests
+      - name: Type-check Python tooling (mypy, strict)
+        run: mypy --no-incremental
+      - name: Lint workflows (actionlint)
+        run: actionlint -no-color
       - name: Test label automation
         run: |
           node .github/scripts/labels-sync.mjs --self-test

@@ -7,8 +7,8 @@ are skipped locally and fail in GitHub Actions.
 
 import os
 import re
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 try:
     import yaml
@@ -119,7 +119,7 @@ class WorkflowControlTests(unittest.TestCase):
         self.assertEqual(document['version'], 2)
         updates = document['updates']
         self.assertEqual(sorted((u['package-ecosystem'], u['directory']) for u in updates),
-                         [('github-actions', '/'), ('pip', '/.github')])
+                         [('github-actions', '/'), ('pip', '/.github'), ('pip', '/tools')])
         for update in updates:
             with self.subTest(ecosystem=update['package-ecosystem']):
                 self.assertNotIn('milestone', update)

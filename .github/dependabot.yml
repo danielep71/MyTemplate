@@ -1,5 +1,6 @@
-# Proposes updates to SHA-pinned GitHub Actions and to the pinned configuration
-# parser in .github/requirements.txt. Every update arrives as a pull request
+# Proposes updates to SHA-pinned GitHub Actions, the pinned configuration
+# parser in .github/requirements.txt, and the hash-locked quality tools in
+# tools/requirements-quality-ci.txt. Every update arrives as a pull request
 # for my review; nothing merges automatically.
 # Pull requests target the default branch. If development happens on a
 # release branch, set target-branch to that branch.
@@ -43,5 +44,24 @@ updates:
       prefix: ci
     groups:
       configuration-parser:
+        patterns:
+          - "*"
+  - package-ecosystem: pip
+    directory: /tools
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: Europe/Rome
+    open-pull-requests-limit: 5
+    labels:
+      - ci
+      - P3
+    assignees:
+      - danielep71
+    commit-message:
+      prefix: ci
+    groups:
+      python-quality-tools:
         patterns:
           - "*"

@@ -20,9 +20,12 @@ The following files were imported or adapted from danielep71/K-SFTs
 .github/workflows/traffic-history.yml
 SECURITY.md
 docs/repo_governance/TRAFFIC.md
+pyproject.toml
 tools/check_issues.py
+tools/requirements-quality-ci.txt
 tools/traffic_history.py
 tests/test_check_issues.py
+tests/test_quality_gates.py
 tests/test_traffic_history.py
 
 The license text is included in MPL-2.0.txt in this directory.

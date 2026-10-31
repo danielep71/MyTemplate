@@ -1,0 +1,19 @@
+# Hash-locked CPython 3.13 / Linux x86_64 CI requirements for Ruff and mypy.
+# Every hash was checked against PyPI. Regenerate only after reviewing package
+# provenance and wheel hashes; Dependabot proposes updates (.github/dependabot.yml).
+# CI installs with --only-binary=:all: --require-hashes.
+
+ruff==0.17.1 \
+    --hash=sha256:a6ef98e51de8ef38082f90653ceeb84944bd7673783eea13e1647c5b9b064189
+mypy==2.4.0 \
+    --hash=sha256:6be721bd4bd57576193653b75b4af3461c9d0bf7dd8b528f782e9be210dc75bb
+ast-serialize==0.13.0 \
+    --hash=sha256:4f55668338bcb871e83ee21ba865fb08b7b4b13af9312742f9878c39f9d84ee3
+librt==0.16.0 \
+    --hash=sha256:17bac7f7a16b328fff77e440287693eb017abde913595b5827ebccbc21ecd8a6
+mypy-extensions==1.1.0 \
+    --hash=sha256:1be4cccdb0f2482337c4743e60421de3a356cd97508abadd57d47403e94f5505
+pathspec==1.1.1 \
+    --hash=sha256:a00ce642f577bf7f473932318056212bc4f8bfdf53128c78bbd5af0b9b20b189
+typing-extensions==4.16.0 \
+    --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8
