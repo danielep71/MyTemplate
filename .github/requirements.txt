@@ -1,0 +1,3 @@
+# Configuration parser for the workflow and Dependabot control tests only.
+# Dependabot proposes updates (.github/dependabot.yml).
+PyYAML==6.0.3

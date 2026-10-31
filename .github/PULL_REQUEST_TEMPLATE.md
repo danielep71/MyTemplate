@@ -22,7 +22,7 @@ Resolves #
 
 <!-- Commands and checks actually run, with results. Hosted checks run on this pull request. -->
 
-- [ ] `python -m unittest discover -s tests`
+- [ ] `python -m unittest discover -s tests` (with `.github/requirements.txt` installed)
 - [ ] Other checks specific to this change:
 
 ## 🔎 Final-head review

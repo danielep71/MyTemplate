@@ -211,6 +211,14 @@ class SetupTests(unittest.TestCase):
             self.assertIn('| `vulnerability_alerts` | on | on |', verified)
         self.assertEqual([w for w in self.api.writes if 'evidence' in w[1]], [])
 
+    def test_required_status_check_is_the_integrity_job(self):
+        from test_workflow_controls import REQUIRED_CHECK
+        config = setup.load_config(setup.CONFIG)
+        contexts = {check['context'] for ruleset in config['rulesets'] for rule in ruleset['rules']
+                    if rule['type'] == 'required_status_checks'
+                    for check in rule['parameters']['required_status_checks']}
+        self.assertEqual(contexts, {REQUIRED_CHECK})
+
     def test_duplicate_names_rejected_before_writes(self):
         name = setup.load_config(setup.CONFIG)['rulesets'][0]['name']
         self.api.rules = [{'name': name, 'id': 1}, {'name': name, 'id': 2}]

@@ -29,3 +29,12 @@ The license text is included in MPL-2.0.txt in this directory.
 Modifications include generic issue-form wording, local documentation
 references, and file locations.
 This notice applies to the listed files, not unrelated project files.
+
+The following file was adapted from danielep71/K-FRTB-SA
+(https://github.com/danielep71/K-FRTB-SA) under the MIT License:
+
+.github/workflows/pr-milestones.yml
+
+The license text, with its copyright notice, is included in MIT.txt in this
+directory. Modifications restrict pushes and manual runs to the default
+branch and add local documentation references.
