@@ -40,4 +40,5 @@ The following file was adapted from danielep71/K-FRTB-SA
 
 The license text, with its copyright notice, is included in MIT.txt in this
 directory. Modifications restrict pushes and manual runs to the default
-branch and add local documentation references.
+branch, grant issues: read so the script can read pull requests on a private
+repository, and add local documentation references.

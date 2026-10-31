@@ -106,7 +106,7 @@ class WorkflowControlTests(unittest.TestCase):
                          {'types': ['opened', 'reopened', 'edited', 'milestoned']})
         self.assertEqual(document['permissions'], {})
         job = document['jobs']['reconcile']
-        self.assertEqual(job['permissions'], {'pull-requests': 'write'})
+        self.assertEqual(job['permissions'], {'issues': 'read', 'pull-requests': 'write'})
         self.assertIn('github.event.repository.default_branch', job['if'])
         self.assertEqual(len(job['steps']), 1)
         step = job['steps'][0]

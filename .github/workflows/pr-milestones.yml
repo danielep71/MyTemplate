@@ -32,6 +32,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
+      # The script reads each pull request through the issues endpoint, which
+      # needs issues: read on a private repository.
+      issues: read
       pull-requests: write
     steps:
       # Trusted inline code only: never check out or execute a PR's contents.
