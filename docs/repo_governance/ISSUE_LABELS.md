@@ -18,12 +18,53 @@ Only synchronization has `issues: write`. PR validation is read-only. Actions ar
 ## 🚀 New repository
 
 1. Enable Actions and run **Sync issue labels** from the default branch. GitHub template creation copies files; run synchronization to establish the live labels.
-2. To add labels for a generated repository, such as one per regulatory regime, add them to the `labels` list in `.github/labels.json`, sorted case-insensitively by name, and update the label counts in the documentation. **Repository integrity** checks both.
+2. To add labels for a generated repository, such as one per regulatory regime, add them to the `labels` list in `.github/labels.json`, sorted case-insensitively by name, then add each one to the catalogue and usage tables below and update the label counts. **Repository integrity** checks all three.
 3. My GitHub account, `danielep71`, is the assignee in the three issue forms (`assignees`) and in `.github/dependabot.yml`; the triage check reads it from `bug.yml`. If someone else maintains a generated repository, replace my account in those four files. **Repository integrity** fails if they disagree.
 4. Create project milestones, give each open issue exactly one priority and a milestone, and assign it to me (or the account configured for a generated repository). Use `blocked` only for a named open prerequisite or `External condition:`. P1 is reserved for confirmed calculation bugs.
 5. Label validation covers pull requests to every branch. Live synchronization runs only on the current default branch, including after a rename.
 
 **Keep** the label manifest, scripts, all three workflows, issue forms, triage checker/tests, and this guide after bootstrap. They provide ongoing maintenance and must not be deleted with one-time repository setup files.
+
+## 🧭 Using the labels
+
+Every issue has exactly one priority and the type labels that fit the work. Pull requests carry the labels of the work they deliver; milestones belong to issues only.
+
+### Priorities
+
+| Label | Use |
+| --- | --- |
+| `P1` | Reserved for a confirmed calculation bug: wrong results for valid inputs. Only together with `bug`; never for setup, documentation, or tooling work. |
+| `P2` | Material correctness, robustness, or maintainability defect. Default of the bug form. |
+| `P3` | Non-blocking quality, testing, documentation, setup, or technical-debt work. Default of the enhancement and documentation forms and of Dependabot pull requests. |
+
+A form sets the default priority; triage confirms or changes it. Raise a bug to `P1` only once the calculation defect is confirmed.
+
+### Types
+
+| Label | Use |
+| --- | --- |
+| `bug` | A confirmed defect. The bug form sets it. |
+| `enhancement` | New capability or improvement. The enhancement form sets it. |
+| `documentation` | Documentation work. The documentation form sets it. |
+| `behavior-change` | Add to work that changes externally observable behavior, such as computed results or input and output layouts. |
+| `refactor` | Restructuring that preserves supported behavior. If supported behavior changes, use `behavior-change` instead. |
+| `tests` | Regression coverage, test harnesses, fixtures, or manual validation. |
+| `ci` | Workflows and automated checks, including Dependabot updates of the Actions. |
+| `repository` | Repository structure, governance, metadata, or tooling. |
+| `release` | Release preparation, certification, evidence, packaging, or publication. |
+| `security` | Hardening and supply-chain work. Never for an undisclosed vulnerability: report it as `SECURITY.md` describes. |
+
+### Status and triage
+
+| Label | Use |
+| --- | --- |
+| `blocked` | A prerequisite named in the dependency section, as an issue link or an `External condition:` line, is unresolved. Remove it once all are resolved; ready issues carry no status label. |
+| `question` | I need information or a decision before the work can proceed. |
+| `help wanted` | I welcome outside investigation, implementation, validation, or review. |
+| `good first issue` | Well-scoped task suitable for a first contribution. |
+| `duplicate` | Close the issue and link the issue or pull request that already covers the work. |
+| `invalid` | Close the issue: it is incomplete, unsupported, or not actionable as submitted. |
+| `wontfix` | Close the issue: I have decided not to do this work. |
 
 ## 🎨 Catalogue
 
