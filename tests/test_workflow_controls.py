@@ -25,6 +25,7 @@ WRITE_PERMISSIONS = {
     ('traffic-history.yml', 'collect'): {'contents'},
     ('traffic-history.yml', 'alert'): {'issues'},
     ('pr-milestones.yml', 'reconcile'): {'pull-requests'},
+    ('codeql.yml', 'analyze'): {'security-events'},
 }
 PINNED = re.compile(r'^[\w.-]+/[\w.-]+(/[\w./-]+)?@[0-9a-f]{40}$')
 
@@ -137,6 +138,25 @@ class WorkflowControlTests(unittest.TestCase):
         self.assertEqual(set(step), {'name', 'env', 'run'})
         self.assertEqual(step['env'], {'GH_TOKEN': '${{ github.token }}'})
         self.assertNotIn('${{', step['run'])
+
+    def test_code_scanning_covers_each_language_and_skips_when_unavailable(self):
+        document = workflows()['codeql.yml']
+        for event in ('push', 'pull_request'):
+            with self.subTest(event=event):
+                self.assertEqual(document['on'][event], {'branches': ['main', 'release/**']})
+        self.assertIn('schedule', document['on'])
+        jobs = document['jobs']
+        gate = jobs['availability']['steps'][0]
+        self.assertIn('.visibility', gate['run'])
+        self.assertEqual(gate['env']['CODE_SCANNING'], '${{ vars.CODE_SCANNING }}')
+        analyze = jobs['analyze']
+        self.assertEqual(analyze['needs'], 'availability')
+        self.assertEqual(analyze['if'], "needs.availability.outputs.enabled == 'true'")
+        self.assertEqual(sorted(analyze['strategy']['matrix']['language']),
+                         ['actions', 'javascript-typescript', 'python'])
+        uses = [step['uses'].split('@')[0] for step in analyze['steps'] if 'uses' in step]
+        self.assertEqual(uses, ['actions/checkout', 'github/codeql-action/init',
+                                'github/codeql-action/analyze'])
 
     def test_every_pip_install_is_hash_locked(self):
         installs = 0

@@ -117,9 +117,10 @@ of the [settings reference](../repo_governance/SETTINGS.md).
 | **Enforcement** | Active rulesets with no bypass actors or ref exclusions. `Protect main` targets `~DEFAULT_BRANCH`, not a fixed branch name. |
 | **Verification** | All pages are read; full rule definitions are compared without response metadata; managed settings are read back after apply. |
 
-**Outside this baseline:** visibility, template mode, CodeQL and other code
-scanning, Actions policy, Pages, secrets, environments, labels, collaborators
-and integrations. Configure these separately where required.
+**Outside this baseline:** visibility, template mode, Actions policy, Pages,
+secrets, environments, labels, collaborators and integrations. Configure these
+separately where required. Code scanning is configured by the CodeQL workflow,
+not by the script; see *Recommended handover*.
 The script creates no branches, tags, releases or PRs. Destination defaults and
 inherited policies may impose additional restrictions.
 
@@ -150,6 +151,7 @@ inherited policies may impose additional restrictions.
 | `.github/workflows/traffic-history.yml`, `tools/traffic_history.py`, `tests/test_traffic_history.py`, `docs/repo_governance/TRAFFIC.md` | **Keep; enable if wanted** | Optional traffic collection. It does nothing until you follow *Enabling* in `TRAFFIC.md`. Remove all four together if you never want it, and update `docs/licenses/THIRD_PARTY_NOTICES.txt`, which lists them. |
 | `pyproject.toml`, `tools/requirements-quality-ci.txt` | **Keep** | Ruff and strict mypy settings and their hash-locked versions; `tests/test_quality_gates.py` proves the complexity ceiling and strict mode are active. |
 | `.github/dependabot.yml`, `.github/requirements.txt` | **Keep** | Proposes updates to the SHA-pinned Actions, the hash-locked configuration parser that the workflow control tests use, and the hash-locked quality tools. Its `target-branch` names the active release branch: set it to this repository's release branch or remove it to target the default branch. **Repository integrity** fails while it names a branch that does not exist. |
+| `.github/workflows/codeql.yml` | **Keep** | Scans the Python, JavaScript and workflow code with CodeQL on pushes and pull requests to `main` and `release/**`, and weekly; results appear under **Security → Code scanning**. Leave GitHub's default setup off, because it rejects results from this workflow. Free on a public repository; on a private one it needs GitHub Code Security and the repository variable `CODE_SCANNING` set to `enabled`, otherwise it skips the analysis. |
 | `tools/check_links.py`, `tests/test_check_links.py`, `.github/workflows/link-check.yml` | **Keep** | Check every Markdown link: relative links and anchors in **Repository integrity**, external links weekly. |
 | `docs/repo_governance/PULL_REQUESTS.md` | **Keep and adapt** | Final-head review procedure that the pull request template refers to. Adapt it if the project uses another automated reviewer. |
 | `.github/workflows/repository-integrity.yml` | **Keep and evolve** | Supplies the required `Repository integrity` check. Add project-specific checks as the project grows. |
