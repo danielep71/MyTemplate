@@ -163,12 +163,13 @@ utilities. Keep them in the source template so future repositories receive them.
    setup; do not rely on direct pushes to the default branch.
 3. In that same PR, add meaningful project checks to the workflow. Keep the job
    name **`Repository integrity`**, its coverage of all relevant PRs, the steps
-   that install the configuration parser, the quality tools and actionlint, the
-   **Run repository tests**, Ruff, mypy and actionlint steps, and the existing
-   required-document and whitespace checks. The remaining tests in `tests/`
-   (label catalogue, issue triage, workflow controls, quality gates, Markdown
-   links and traffic history) stay after the setup tests are removed; without
-   those install steps, the workflow control and quality-gate tests fail.
+   that set up Node.js and install the configuration parser, the quality tools
+   and actionlint, the **Run repository tests**, Ruff, mypy, actionlint and label
+   automation steps, and the existing required-document and whitespace checks.
+   The remaining tests in `tests/` (label catalogue, issue triage, workflow
+   controls, quality gates, Markdown links and traffic history) stay after the
+   setup tests are removed; without those setup and install steps, the issue
+   triage, workflow control and quality-gate tests fail.
 4. Remove only the retired setup files, together:
 
    ```text
