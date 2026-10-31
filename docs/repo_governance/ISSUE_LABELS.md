@@ -13,7 +13,7 @@ This repository defines 20 issue labels, each with a name, description, and colo
 | Issue triage | Audits open issues on issue events or manual runs. Reports missing assignee, priority, milestone, dependency section, invalid labels, and inconsistent blocked status. |
 | Dependabot (`.github/dependabot.yml`) | Opens a weekly grouped pull request for SHA-pinned GitHub Actions, labelled `ci` and `P3` and assigned to me. Nothing merges automatically. |
 
-Only synchronization has `issues: write`. PR validation is read-only. Actions are pinned to full commit SHAs.
+Among these workflows, only synchronization has `issues: write`; outside them, only the optional traffic-alert job does ([TRAFFIC.md](TRAFFIC.md)). PR validation is read-only. Actions are pinned to full commit SHAs.
 
 ## 🚀 New repository
 

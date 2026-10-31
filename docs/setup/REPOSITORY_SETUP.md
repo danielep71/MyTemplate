@@ -54,7 +54,8 @@ and proposed API changes before applying them.
 python tools/setup_repository.py --repo OWNER/NEW-REPO --apply
 ```
 
-The script creates missing rulesets, patches differing general settings, and reads
+The script creates missing rulesets, enables the security features GitHub offers
+for the destination's visibility, patches differing general settings, and reads
 back the result. Protection is installed before automatic branch deletion is enabled.
 
 ### ③ Verify the result
@@ -143,7 +144,7 @@ inherited policies may impose additional restrictions.
 | `tests/test_setup_repository.py` | **Keep while retaining setup tooling** | Imports the setup script and reads its JSON configuration. |
 | `docs/setup/REPOSITORY_SETUP.md` | **Keep or retire after handover** | Optional operational guide; remove links to it if you retire it. |
 | `.github/PULL_REQUEST_TEMPLATE.md` | **Keep and adapt** | Records linked issues, validation, final-head review and what was not validated. Add the project's own checks to *Validated*. |
-| `.github/workflows/traffic-history.yml`, `tools/traffic_history.py`, `docs/repo_governance/TRAFFIC.md` | **Keep; enable if wanted** | Optional traffic collection. It does nothing until you follow *Enabling* in `TRAFFIC.md`. |
+| `.github/workflows/traffic-history.yml`, `tools/traffic_history.py`, `tests/test_traffic_history.py`, `docs/repo_governance/TRAFFIC.md` | **Keep; enable if wanted** | Optional traffic collection. It does nothing until you follow *Enabling* in `TRAFFIC.md`. Remove all four together if you never want it. |
 | `.github/dependabot.yml` | **Keep** | Proposes updates to the SHA-pinned Actions. Set `target-branch` if development happens on a release branch. |
 | `.github/workflows/repository-integrity.yml` | **Keep and evolve** | Supplies the required `Repository integrity` check. Add project-specific checks as the project grows. |
 | GitHub **Template repository** setting | **Review separately** | Choose whether the new project should itself be reusable as a template; the setup script does not change this flag. |

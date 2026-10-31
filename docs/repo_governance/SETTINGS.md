@@ -23,7 +23,8 @@ creating and activating that targeted ruleset is still a customization.
 
 Reference documentation checked: **2026-10-29**. Repository-specific evidence,
 observation dates and rule IDs belong in the repository's setup record described
-in the [setup guide](../setup/REPOSITORY_SETUP.md), not in this portable file. Copying this file does not apply settings or verify another repository.
+in the [setup guide](../setup/REPOSITORY_SETUP.md), not in this portable file.
+Copying this file does not apply settings or verify another repository.
 
 [General differences](#general) · [Security features](#security) · [Custom protection](#rulesets) · [Reuse](#reuse) · [Sources](#sources)
 
