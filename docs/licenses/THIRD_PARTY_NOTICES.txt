@@ -30,7 +30,8 @@ tests/test_traffic_history.py
 
 The license text is included in MPL-2.0.txt in this directory.
 Modifications include generic issue-form wording, local documentation
-references, and file locations.
+references, file locations, and newest-observation tracking in the traffic
+history merge.
 This notice applies to the listed files, not unrelated project files.
 
 The following file was adapted from danielep71/K-FRTB-SA
