@@ -170,7 +170,11 @@ utilities. Keep them in the source template so future repositories receive them.
    name **`Repository integrity`**, its coverage of all relevant PRs, the steps
    that set up Node.js and install the configuration parser, the quality tools
    and actionlint, the **Run repository tests**, Ruff, mypy, actionlint and label
-   automation steps, and the existing required-document and whitespace checks.
+   automation steps, the existing required-document and whitespace checks, and
+   the template-cleanup checks: the template-only section, the issue contact
+   links, the README traffic badges, Dependabot's target branches and CodeQL's
+   default branch. Keep `.github/workflows/codeql.yml`: it is not part of the
+   setup tooling.
    The remaining tests in `tests/` (label catalogue, issue triage, workflow
    controls, quality gates, Markdown links and traffic history) stay after the
    setup tests are removed; without those setup and install steps, the issue
