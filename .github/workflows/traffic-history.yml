@@ -151,19 +151,34 @@ jobs:
           auth="AUTHORIZATION: basic $basic"
           git_auth() { git -c "http.https://github.com/.extraheader=$auth" "$@"; }
 
+          # set -e does not apply inside a function called from a || list, so
+          # each git command checks its own status. 3 means "nothing to commit".
           commit() {
-            git add data
+            git add data || return 1
             if git diff --cached --quiet; then
               echo "No change to the history."
-              return 1
+              return 3
             fi
-            git commit --quiet -m "chore: record traffic collected at $COLLECTED_AT"
+            git commit --quiet -m "chore: record traffic collected at $COLLECTED_AT" || return 1
+          }
+          record() {
+            status=0
+            commit || status=$?
+            if [ "$status" -eq 3 ]; then
+              exit 0
+            elif [ "$status" -ne 0 ]; then
+              echo "::error::Could not commit the history"
+              exit "$status"
+            fi
           }
 
-          commit || exit 0
+          record
           for attempt in 1 2 3; do
             if git_auth push origin HEAD:traffic-history; then
               exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              break
             fi
             # Another writer moved the branch: rebuild this collection on its
             # new tip instead of overwriting it.
@@ -172,7 +187,7 @@ jobs:
             git reset --hard FETCH_HEAD
             python ../source/tools/traffic_history.py merge \
               --raw "$RAW" --data data --collected-at "$COLLECTED_AT"
-            commit || exit 0
+            record
           done
           echo "::error::Could not push the history after 3 attempts"
           exit 1
