@@ -1,4 +1,4 @@
-"""Cross-file contracts for the template's public label catalogue."""
+"""Cross-file contracts: label catalogue, Dependabot, Markdown, API versions and template-only names."""
 
 import json
 import re
@@ -90,6 +90,39 @@ class MarkdownLinkTests(unittest.TestCase):
                     broken.append((relative.as_posix(), inline or reference))
         self.assertGreater(checked, 0)
         self.assertEqual(broken, [])
+
+
+    def test_code_fences_close_on_a_line_of_their_own(self):
+        # A closing fence followed by text does not close the block on GitHub.
+        problems = []
+        for path in sorted(ROOT.rglob('*.md')):
+            relative = path.relative_to(ROOT)
+            if relative.parts[0] == '.git':
+                continue
+            opened = None
+            for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+                if not line.lstrip().startswith('```'):
+                    continue
+                if opened is None:
+                    opened = number
+                elif line.strip() == '```':
+                    opened = None
+                else:
+                    problems.append((relative.as_posix(), number))
+            if opened is not None:
+                problems.append((relative.as_posix(), opened))
+        self.assertEqual(problems, [])
+
+
+class ApiVersionTests(unittest.TestCase):
+    def test_every_github_api_call_uses_the_same_version(self):
+        found = {}
+        for path in [*ROOT.glob('tools/*.py'), *ROOT.glob('.github/workflows/*.yml'),
+                     *ROOT.glob('.github/scripts/*.mjs')]:
+            text = path.read_text(encoding='utf-8')
+            for version in re.findall(r'(?:X-GitHub-Api-Version|API_VERSION)\W+(\d{4}-\d{2}-\d{2})', text):
+                found.setdefault(version, []).append(path.relative_to(ROOT).as_posix())
+        self.assertEqual(len(found), 1, found)
 
 
 class TemplateOnlyContentTests(unittest.TestCase):

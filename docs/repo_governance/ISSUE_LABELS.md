@@ -10,8 +10,8 @@ This repository defines 20 issue labels, each with a name, description, and colo
 | --- | --- |
 | Sync issue labels | Validates pull requests; reconciles labels after a catalogue change lands on the default branch or a manual run on the default branch. Verifies the exact live result. |
 | Detect issue-label drift | Checks daily at 05:17 UTC and manually; PR runs use offline fixtures. Reports drift without modifying labels. |
-| Issue triage | Audits open issues on issue events or manual runs. Reports missing assignee, priority, milestone, target end date, dependency section, invalid labels, and inconsistent blocked status. |
-| Keep milestones issue-only | Removes any milestone set on a pull request, on each pull-request event and in a daily and manual scan of every pull request. It never checks out pull-request code. |
+| Issue triage | Audits open issues on issue and milestone events or manual runs. Reports a missing assignee, priority, open milestone, target end date or dependency section, a target end date not before the milestone's due date, invalid labels, and inconsistent blocked status. |
+| Keep milestones issue-only | Removes any milestone set on a pull request when the pull request is opened, reopened, edited, or given a milestone, and in a daily and manual scan of every pull request. It never checks out pull-request code. |
 | Dependabot (`.github/dependabot.yml`) | Opens weekly grouped pull requests for the SHA-pinned GitHub Actions, the hash-locked configuration parser, and the hash-locked Python quality tools, labelled `ci` and `P3` and assigned to me. Nothing merges automatically. |
 
 Among these workflows, only synchronization has `issues: write` and only *Keep milestones issue-only* has `pull-requests: write`; outside them, only the optional traffic-alert job writes issues ([TRAFFIC.md](TRAFFIC.md)). `tests/test_workflow_controls.py` fails if any other job gains a write permission. PR validation is read-only. Actions are pinned to full commit SHAs.
@@ -21,7 +21,7 @@ Among these workflows, only synchronization has `issues: write` and only *Keep m
 1. Enable Actions and run **Sync issue labels** from the default branch. GitHub template creation copies files; run synchronization to establish the live labels.
 2. To add labels for a generated repository, such as one per regulatory regime, add them to the `labels` list in `.github/labels.json`, sorted case-insensitively by name, then add each one to the catalogue and usage tables below and update the label counts. **Repository integrity** checks all three.
 3. My GitHub account, `danielep71`, is the assignee in the four issue forms (`assignees`) and in `.github/dependabot.yml`; the triage check reads it from `bug.yml`. If someone else maintains a generated repository, replace my account in those five files. **Repository integrity** fails if they disagree.
-4. Create project milestones with due dates, give each open issue exactly one priority, a milestone, and a target end date before that milestone's due date, and assign it to me (or the account configured for a generated repository). Use `blocked` only for a named open prerequisite or `External condition:`. P1 is reserved for confirmed calculation bugs.
+4. Create project milestones with due dates, give each open issue exactly one priority, an open milestone, and a target end date before that milestone's due date, and assign it to me (or the account configured for a generated repository). Use `blocked` only for a named open prerequisite or `External condition:`. P1 is reserved for confirmed calculation bugs.
 5. Label validation covers pull requests to every branch. Live synchronization runs only on the current default branch, including after a rename.
 
 **Keep** the label manifest, scripts, all four workflows, issue forms, triage checker/tests, and this guide after bootstrap. They provide ongoing maintenance and must not be deleted with one-time repository setup files.
@@ -58,7 +58,7 @@ When both are present, that line takes precedence over the form field, so edit t
 | `behavior-change` | Add to work that changes externally observable behavior, such as computed results or input and output layouts. |
 | `refactor` | Restructuring that preserves supported behavior. If supported behavior changes, use `behavior-change` instead. |
 | `tests` | Regression coverage, test harnesses, fixtures, or manual validation. |
-| `ci` | Workflows and automated checks, including Dependabot updates of the Actions. |
+| `ci` | Workflows, automated checks, and dependency updates, including every Dependabot pull request. Release certification belongs to `release`. |
 | `repository` | Repository structure, governance, metadata, or tooling. |
 | `release` | Release preparation, certification, evidence, packaging, or publication. |
 | `security` | Hardening and supply-chain work, and private security contact requests, which never contain vulnerability details. Never for an undisclosed vulnerability: report it as `SECURITY.md` describes. |
@@ -96,7 +96,7 @@ The table below lists the descriptions defined in `.github/labels.json`, which s
 | `behavior-change` | `#C24E00` | Intentional externally observable behavior change |
 | `blocked` | `#B60205` | Cannot proceed until a named dependency is complete |
 | `bug` | `#D73A4A` | Confirmed defect in behavior, correctness, error handling, or a documented contract |
-| `ci` | `#24292F` | Automated quality checks, workflow maintenance, or release certification |
+| `ci` | `#24292F` | Automated quality checks, workflow maintenance, or dependency updates |
 | `documentation` | `#0075CA` | Documentation for users or for my repository maintenance |
 | `duplicate` | `#CFD3D7` | An existing issue or pull request already covers this work |
 | `enhancement` | `#A2EEEF` | New capability or meaningful improvement to supported behavior |

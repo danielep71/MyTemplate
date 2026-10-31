@@ -135,6 +135,25 @@ class WorkflowControlTests(unittest.TestCase):
                     self.assertRegex(requirement.split()[0], r'^[\w.-]+==[\w.]+$')
                     self.assertRegex(requirement, r'--hash=sha256:[0-9a-f]{64}')
 
+    def test_jobs_that_run_node_set_it_up_first(self):
+        # The repository tests and the issue checker run the label scripts too.
+        uses_node = re.compile(r'\bnode\s|unittest|check_issues\.py')
+        versions, jobs = set(), 0
+        for name, document in workflows().items():
+            for job_id, job in document['jobs'].items():
+                steps = job.get('steps', [])
+                runs = [i for i, step in enumerate(steps) if uses_node.search(step.get('run') or '')]
+                if not runs:
+                    continue
+                jobs += 1
+                setups = [i for i, step in enumerate(steps)
+                          if str(step.get('uses', '')).startswith('actions/setup-node@')]
+                with self.subTest(workflow=name, job=job_id):
+                    self.assertTrue(setups and setups[0] < runs[0], 'set up Node.js before using it')
+                    versions.add(str(steps[setups[0]]['with']['node-version']))
+        self.assertGreater(jobs, 0)
+        self.assertEqual(len(versions), 1, f'one Node.js version everywhere, found {versions}')
+
     def test_dependabot_covers_each_pinned_dependency_once(self):
         document = yaml.safe_load((ROOT / '.github/dependabot.yml').read_text(encoding='utf-8'))
         self.assertEqual(document['version'], 2)

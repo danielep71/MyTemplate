@@ -211,8 +211,9 @@ settings, not every GitHub setting or inherited policy.
 ## 🔄 Maintain the baseline
 
 Update the JSON and Markdown together when changing policy, review the preview,
-and run the offline tests before applying it. Install the pinned configuration
-parser once; without it the workflow control tests are skipped locally:
+and run the offline tests before applying it. The tests also need Node.js, which
+runs the label scripts; the workflows set up Node.js 24. Install the pinned
+configuration parser once; without it the workflow control tests are skipped locally:
 
 ```sh
 python -m pip install --require-hashes -r .github/requirements.txt
@@ -229,9 +230,10 @@ CPython 3.13 for Linux x86_64, the platform the hashes in
 python -m pip install --only-binary=:all: --require-hashes -r tools/requirements-quality-ci.txt
 ruff check tools tests
 mypy
-``` Once setup tooling has
-been retired from a generated project, use that project's replacement validation
-and settings-maintenance process instead.
+```
+
+Once setup tooling has been retired from a generated project, use that project's
+replacement validation and settings-maintenance process instead.
 
 ---
 

@@ -30,8 +30,9 @@ tests/test_traffic_history.py
 
 The license text is included in MPL-2.0.txt in this directory.
 Modifications include generic issue-form wording, local documentation
-references, file locations, and newest-observation tracking in the traffic
-history merge.
+references, file locations, newest-observation tracking in the traffic
+history merge, a pinned Node.js setup in the workflows, and issue triage on
+milestone events.
 This notice applies to the listed files, not unrelated project files.
 
 The target end date rule was adapted from danielep71/K-NSFR

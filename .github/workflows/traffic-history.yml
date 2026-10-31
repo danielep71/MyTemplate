@@ -104,7 +104,7 @@ jobs:
               --retry 5 --retry-max-time 300 --max-time 60 \
               --header "Authorization: Bearer $TRAFFIC_TOKEN" \
               --header "Accept: application/vnd.github+json" \
-              --header "X-GitHub-Api-Version: 2026-03-10" \
+              --header "X-GitHub-Api-Version: 2022-11-28" \
               --output "$RAW/$name.json" \
               "$API${resource:+/$resource}" \
               || { echo "::error::API request for ${resource:-the repository} failed"; exit 1; }
