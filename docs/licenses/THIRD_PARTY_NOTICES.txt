@@ -11,6 +11,7 @@ The following files were imported or adapted from danielep71/K-SFTs
 .github/ISSUE_TEMPLATE/documentation.yml
 .github/ISSUE_TEMPLATE/enhancement.yml
 .github/labels.json
+.github/PULL_REQUEST_TEMPLATE.md
 .github/scripts/labels-sync.mjs
 .github/scripts/labels-drift.mjs
 .github/workflows/labels-sync.yml
