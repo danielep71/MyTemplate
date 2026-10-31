@@ -148,7 +148,7 @@ def parse_series(data: Any, key: str, collected: date) -> Series:
         day = match.group(1)
         if day in days:
             raise TrafficError(f"{where}: duplicate date {day}")
-        if date.fromisoformat(day) > collected:
+        if calendar_date(day, f"{where}.timestamp") > collected:
             raise TrafficError(f"{where}: date {day} is after the collection date")
         days[day] = (count(item.get("count"), f"{where}.count"),
                      count(item.get("uniques"), f"{where}.uniques"))
@@ -204,6 +204,21 @@ def load_collection(raw: Path, collected_at: datetime) -> Collection:
 # --- History files ---------------------------------------------------------------
 
 
+def calendar_date(value: str, where: str) -> date:
+    """A YYYY-MM-DD string that names a real day, such as not 2026-02-30."""
+    try:
+        if ISO_DATE.match(value):
+            return date.fromisoformat(value)
+    except ValueError:
+        pass
+    raise TrafficError(f"{where}: invalid date {value!r}")
+
+
+def row_key(name: str, row: Mapping[str, str]) -> tuple[str, ...]:
+    """The columns that identify a row: its date, and its rank when ranked."""
+    return (row[HEADERS[name][0]], row["rank"]) if "rank" in HEADERS[name] else (row[HEADERS[name][0]],)
+
+
 def read_history(path: Path) -> list[Row]:
     """Read one history file, refusing anything whose layout is not the expected one."""
     header = HEADERS[path.name]
@@ -218,11 +233,15 @@ def read_history(path: Path) -> list[Row]:
     if found != header and found not in LEGACY_HEADERS.get(path.name, ()):
         raise TrafficError(f"{path.name}: header is {reader.fieldnames}, expected {list(header)}")
     rows = []
+    seen: set[tuple[str, ...]] = set()
     for number, row in enumerate(reader, start=2):
         if None in row or any(value is None for value in row.values()):
             raise TrafficError(f"{path.name}:{number}: wrong number of fields")
-        if not ISO_DATE.match(row[header[0]]):
-            raise TrafficError(f"{path.name}:{number}: invalid date {row[header[0]]!r}")
+        calendar_date(row[header[0]], f"{path.name}:{number}")
+        key = row_key(path.name, row)
+        if key in seen:
+            raise TrafficError(f"{path.name}:{number}: duplicate row for {', '.join(key)}")
+        seen.add(key)
         complete = {key: "" for key in header} | dict(row)
         for observed, collected in OBSERVED.get(path.name, {}).items():
             if observed not in row:
