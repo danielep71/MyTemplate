@@ -104,6 +104,14 @@ class ApiVersionTests(unittest.TestCase):
         self.assertEqual(len(found), 1, found)
 
 
+class LicenseNoticeTests(unittest.TestCase):
+    def test_every_file_listed_in_the_notice_exists(self):
+        notice = (ROOT / 'docs/licenses/THIRD_PARTY_NOTICES.txt').read_text(encoding='utf-8')
+        listed = re.findall(r'^([.\w][\w./-]*\.[\w]+|\.[\w]+)$', notice, re.M)
+        self.assertTrue(listed, 'the notice lists no files')
+        self.assertEqual([path for path in listed if not (ROOT / path).is_file()], [])
+
+
 class TemplateOnlyContentTests(unittest.TestCase):
     def test_reference_repositories_are_named_only_where_allowed(self):
         agents = (ROOT / 'AGENTS.md').read_text(encoding='utf-8')
