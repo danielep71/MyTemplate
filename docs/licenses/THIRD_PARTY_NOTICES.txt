@@ -11,14 +11,19 @@ The following files were imported or adapted from danielep71/K-SFTs
 .github/ISSUE_TEMPLATE/documentation.yml
 .github/ISSUE_TEMPLATE/enhancement.yml
 .github/labels.json
+.github/PULL_REQUEST_TEMPLATE.md
 .github/scripts/labels-sync.mjs
 .github/scripts/labels-drift.mjs
 .github/workflows/labels-sync.yml
 .github/workflows/labels-drift.yml
 .github/workflows/issue-triage.yml
+.github/workflows/traffic-history.yml
 SECURITY.md
+docs/repo_governance/TRAFFIC.md
 tools/check_issues.py
+tools/traffic_history.py
 tests/test_check_issues.py
+tests/test_traffic_history.py
 
 The license text is included in MPL-2.0.txt in this directory.
 Modifications include generic issue-form wording, local documentation

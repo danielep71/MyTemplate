@@ -9,6 +9,7 @@ Ongoing repository rules and maintenance guidance live here. One-time initializa
 | --- | --- |
 | [⚙️ Settings](SETTINGS.md) | Repository settings and branch/tag protection baseline. |
 | [🏷️ Issue labels](ISSUE_LABELS.md) | Label catalogue, synchronization, drift detection, and issue triage. |
+| [📈 Traffic history](TRAFFIC.md) | Optional daily traffic collection on the `traffic-history` branch, with alerts. |
 | [🚀 Repository setup](../setup/REPOSITORY_SETUP.md) | Preview, apply, verify, and hand over a newly generated repository. |
 | [📋 Settings configuration](../setup/repository-settings.json) | Machine-readable baseline used by the setup script. |
 | [🔒 Security policy](../../SECURITY.md) | Private vulnerability reporting, response targets, and scope. |

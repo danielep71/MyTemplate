@@ -1,6 +1,8 @@
 import argparse
 import copy
 import io
+import json
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -23,14 +25,26 @@ class FakeAPI:
         self.green = True
         self.ignore_patch = False
         self.reporting = False
+        self.alerts = False
+        self.fixes = False
+
+    def not_found(self, endpoint):
+        raise setup.SetupError(f'GET {endpoint} failed (HTTP 404). Check gh authentication.')
 
     def __call__(self, method, endpoint, payload=None):
-        if endpoint.endswith('/private-vulnerability-reporting'):
-            if method == 'GET':
-                return {'enabled': self.reporting}
-            self.writes.append((method, endpoint, payload))
-            self.reporting = method == 'PUT'
-            return None
+        switches = {'/private-vulnerability-reporting': 'reporting',
+                    '/vulnerability-alerts': 'alerts', '/automated-security-fixes': 'fixes'}
+        for suffix, attribute in switches.items():
+            if endpoint.endswith(suffix):
+                if method == 'GET':
+                    if attribute == 'reporting':
+                        return {'enabled': self.reporting}
+                    if attribute == 'alerts':
+                        return None if self.alerts else self.not_found(endpoint)
+                    return {'enabled': self.fixes, 'paused': False} if self.alerts else self.not_found(endpoint)
+                self.writes.append((method, endpoint, payload))
+                setattr(self, attribute, method == 'PUT')
+                return None
         if method != 'GET':
             self.writes.append((method, endpoint, copy.deepcopy(payload)))
             if method == 'POST':
@@ -39,6 +53,10 @@ class FakeAPI:
                 i = int(endpoint.rsplit('/', 1)[1])
                 self.rules = [dict(copy.deepcopy(payload), id=i, source_type='Repository') if r['id'] == i else r for r in self.rules]
             elif method == 'PATCH' and not self.ignore_patch:
+                payload = copy.deepcopy(payload)
+                analysis = payload.pop('security_and_analysis', None)
+                if analysis:
+                    self.repo.setdefault('security_and_analysis', {}).update(analysis)
                 self.repo.update(payload)
             return {}
         if '/check-runs?' in endpoint:
@@ -57,7 +75,7 @@ class SetupTests(unittest.TestCase):
     def setUp(self):
         self.api = FakeAPI()
         self.args = argparse.Namespace(repo='example/project', config=setup.CONFIG,
-                                       apply=False, check=False, update_existing=False)
+                                       apply=False, check=False, update_existing=False, report=None)
 
     def run_setup(self):
         with redirect_stdout(io.StringIO()):
@@ -75,8 +93,10 @@ class SetupTests(unittest.TestCase):
     def test_apply_verify_and_second_run_is_noop(self):
         self.args.apply = True
         self.assertEqual(self.run_setup(), 0)
-        self.assertEqual(len(self.api.writes), 6)
-        self.assertEqual(self.api.writes[-1][0], 'PATCH')
+        # Five rulesets, vulnerability alerts, security updates, general settings.
+        self.assertEqual([w[0] for w in self.api.writes], ['POST'] * 5 + ['PUT', 'PUT', 'PATCH'])
+        self.assertEqual([w[1].rsplit('/', 1)[1] for w in self.api.writes[5:7]],
+                         ['vulnerability-alerts', 'automated-security-fixes'])
         self.api.writes.clear()
         self.assertEqual(self.run_setup(), 0)
         self.assertEqual(self.api.writes, [])
@@ -133,13 +153,37 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(self.run_setup(), 0)
         self.assertEqual(self.api.writes, [])
 
-    def test_private_repository_skips_vulnerability_reporting_with_a_note(self):
+    def test_private_repository_skips_public_only_features_with_a_note(self):
         self.args.apply = True
         output = io.StringIO()
         with redirect_stdout(output):
             self.assertEqual(setup.run(self.args, self.api), 0)
-        self.assertIn('available only for public repositories', output.getvalue())
-        self.assertFalse(any('vulnerability' in endpoint for _, endpoint, _ in self.api.writes))
+        self.assertIn('private_vulnerability_reporting, secret_scanning, '
+                      'secret_scanning_push_protection apply only to public repositories',
+                      output.getvalue())
+        self.assertFalse(any('private-vulnerability' in endpoint or 'security_and_analysis' in str(payload)
+                             for _, endpoint, payload in self.api.writes))
+
+    def test_public_repository_enables_secret_scanning_and_push_protection(self):
+        self.api.repo['visibility'] = 'public'
+        self.args.apply = True
+        self.assertEqual(self.run_setup(), 0)
+        self.assertIn(('PATCH', 'repos/example/project',
+                       {'security_and_analysis': {'secret_scanning': {'status': 'enabled'},
+                                                  'secret_scanning_push_protection': {'status': 'enabled'}}}),
+                      self.api.writes)
+        self.assertEqual(self.api.writes[-1][2], {'delete_branch_on_merge': True, 'allow_update_branch': True,
+                                                  'has_projects': False, 'has_downloads': False})
+
+    def test_dependent_security_features_are_rejected(self):
+        config = setup.load_config(setup.CONFIG)
+        for disabled, needed_by in (('secret_scanning', 'Push protection'),
+                                    ('vulnerability_alerts', 'security updates')):
+            broken = copy.deepcopy(config)
+            broken['security'][disabled] = False
+            with patch.object(Path, 'read_text', return_value=json.dumps(broken)):
+                with self.assertRaisesRegex(setup.SetupError, needed_by):
+                    setup.load_config(Path('settings.json'))
 
     def test_check_reports_disabled_vulnerability_reporting_as_drift(self):
         self.api.repo['visibility'] = 'public'
@@ -148,6 +192,24 @@ class SetupTests(unittest.TestCase):
         self.api.reporting = False
         self.args.apply, self.args.check = False, True
         self.assertEqual(self.run_setup(), 1)
+
+    def test_report_records_drift_then_verification(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.args.report = Path(directory) / 'evidence' / 'settings.md'
+            self.args.check = True
+            self.assertEqual(self.run_setup(), 1)
+            drift = self.args.report.read_text(encoding='utf-8')
+            self.assertIn('- Result: **DRIFT**', drift)
+            self.assertIn('| Protect main | — | missing |', drift)
+            self.assertIn('| `has_projects` | off | on |', drift)
+            self.assertIn('| `secret_scanning` | on | not applied (public repositories only) |', drift)
+            self.args.check, self.args.apply = False, True
+            self.assertEqual(self.run_setup(), 0)
+            verified = self.args.report.read_text(encoding='utf-8')
+            self.assertIn('- Result: **VERIFIED**', verified)
+            self.assertIn('| Protect main | 5 | matches |', verified)
+            self.assertIn('| `vulnerability_alerts` | on | on |', verified)
+        self.assertEqual([w for w in self.api.writes if 'evidence' in w[1]], [])
 
     def test_duplicate_names_rejected_before_writes(self):
         name = setup.load_config(setup.CONFIG)['rulesets'][0]['name']

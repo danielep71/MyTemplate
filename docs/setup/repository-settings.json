@@ -1,12 +1,18 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "repository": {
     "delete_branch_on_merge": true,
     "allow_update_branch": true,
     "has_projects": false,
     "has_downloads": false
   },
-  "private_vulnerability_reporting": true,
+  "security": {
+    "private_vulnerability_reporting": true,
+    "vulnerability_alerts": true,
+    "automated_security_fixes": true,
+    "secret_scanning": true,
+    "secret_scanning_push_protection": true
+  },
   "rulesets": [
     {
       "name": "Prevent release branch deletion",

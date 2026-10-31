@@ -4,7 +4,7 @@
 
 **From template files to a configured GitHub repository**
 
-[![Scope](https://img.shields.io/badge/Scope-5_settings_%C2%B7_5_rulesets-00338D?style=flat-square)](#-what-this-applies)
+[![Scope](https://img.shields.io/badge/Scope-4_settings_%C2%B7_5_security_features_%C2%B7_5_rulesets-00338D?style=flat-square)](#-what-this-applies)
 [![Mode](https://img.shields.io/badge/Default-Preview_only-005EB8?style=flat-square)](#-launch-sequence)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](#-before-you-start)
 [![Verification](https://img.shields.io/badge/Verification-Read_back_after_apply-00875A?style=flat-square)](#-verification-and-recovery)
@@ -26,7 +26,7 @@
 | --- | --- |
 | **Runtime** | Python **3.10+** and a recent [GitHub CLI](https://cli.github.com/) are installed. |
 | **Destination** | The new repository exists and contains the template files. |
-| **Template cleanup** | The template-only section of `AGENTS.md`, between its `template-only` markers, is deleted. `Repository integrity` fails in a generated repository until it is. |
+| **Template cleanup** | The template-only section of `AGENTS.md`, between its `template-only` markers, is deleted, and the two `contact_links` URLs in `.github/ISSUE_TEMPLATE/config.yml` name the new repository. `Repository integrity` fails in a generated repository until both are done. |
 | **Identity** | `gh auth status --hostname github.com` shows an account with administrator access to the destination. Sign in with `gh auth login --hostname github.com`, or set `GH_TOKEN` to a fine-grained token. |
 | **Token permissions** | A fine-grained token has destination repository **Administration: write**, **Contents: read**, and **Checks: read**. A workflow `GITHUB_TOKEN` cannot administer these rulesets. Never commit tokens. |
 | **Integrity check** | Actions is enabled and `Repository integrity` has succeeded on the **current default-branch HEAD**. |
@@ -60,13 +60,18 @@ back the result. Protection is installed before automatic branch deletion is ena
 ### ③ Verify the result
 
 ```sh
-python tools/setup_repository.py --repo OWNER/NEW-REPO --check
+python tools/setup_repository.py --repo OWNER/NEW-REPO --check \
+  --report docs/repo_governance/SETTINGS_EVIDENCE.md
 ```
 
-A verified match returns **0**. Keep the output in the repository's **setup
-record**: an issue, pull request, or document that holds setup evidence such as
-check output, observation dates, and ruleset IDs. Running apply again against
-matching settings makes no writes.
+A verified match returns **0**. `--report` writes the repository's **setup
+record**: a dated Markdown file with each managed setting and security feature as
+configured and as GitHub reports it, each managed ruleset with its ID and status,
+and any unmanaged or inherited rulesets. `docs/repo_governance/SETTINGS_EVIDENCE.md`
+is the conventional place to commit it in a generated repository; add anything the
+script cannot read, such as decisions and exceptions, below it. `--report` works with
+preview, `--check` and `--apply`; after apply it records the read-back state.
+Running apply again against matching settings makes no writes.
 
 <details>
 <summary><strong>⚙️ Advanced: reconcile an existing named ruleset</strong></summary>
@@ -105,13 +110,13 @@ of the [settings reference](../repo_governance/SETTINGS.md).
 
 | Layer | Managed configuration |
 | --- | --- |
-| **General · 5 settings** | Delete merged head branches; suggest PR branch updates; disable Projects; disable the legacy downloads flag; enable private vulnerability reporting on a public repository (skipped with a note otherwise). |
+| **General · 4 settings** | Delete merged head branches; suggest PR branch updates; disable Projects; disable the legacy downloads flag. |
+| **Security · 5 features** | Dependabot alerts and security updates on every repository; private vulnerability reporting, secret scanning and push protection on a public repository (skipped with a note otherwise). |
 | **Protection · 5 rulesets** | Default branch, release branches, independent release-branch deletion protection, release tags, and traffic history. |
 | **Enforcement** | Active rulesets with no bypass actors or ref exclusions. `Protect main` targets `~DEFAULT_BRANCH`, not a fixed branch name. |
 | **Verification** | All pages are read; full rule definitions are compared without response metadata; managed settings are read back after apply. |
 
-**Outside this baseline:** visibility, template mode, security switches (Dependabot
-alerts and security updates, CodeQL, Secret Protection), Actions policy, Pages, secrets, environments, labels,
+**Outside this baseline:** visibility, template mode, CodeQL and other code scanning, Actions policy, Pages, secrets, environments, labels,
 collaborators and integrations. Configure these separately where required.
 The script creates no branches, tags, releases or PRs. Destination defaults and
 inherited policies may impose additional restrictions.
@@ -137,6 +142,8 @@ inherited policies may impose additional restrictions.
 | `tools/setup_repository.py` | **Keep** | Provides preview, apply and verification for future maintenance. |
 | `tests/test_setup_repository.py` | **Keep while retaining setup tooling** | Imports the setup script and reads its JSON configuration. |
 | `docs/setup/REPOSITORY_SETUP.md` | **Keep or retire after handover** | Optional operational guide; remove links to it if you retire it. |
+| `.github/PULL_REQUEST_TEMPLATE.md` | **Keep and adapt** | Records linked issues, validation, final-head review and what was not validated. Add the project's own checks to *Validated*. |
+| `.github/workflows/traffic-history.yml`, `tools/traffic_history.py`, `docs/repo_governance/TRAFFIC.md` | **Keep; enable if wanted** | Optional traffic collection. It does nothing until you follow *Enabling* in `TRAFFIC.md`. |
 | `.github/dependabot.yml` | **Keep** | Proposes updates to the SHA-pinned Actions. Set `target-branch` if development happens on a release branch. |
 | `.github/workflows/repository-integrity.yml` | **Keep and evolve** | Supplies the required `Repository integrity` check. Add project-specific checks as the project grows. |
 | GitHub **Template repository** setting | **Review separately** | Choose whether the new project should itself be reusable as a template; the setup script does not change this flag. |

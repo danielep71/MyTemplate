@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Apply the portable baseline through an authenticated GitHub CLI (github.com)."""
 import argparse
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -12,6 +13,16 @@ from urllib.parse import quote
 CONFIG = Path(__file__).resolve().parents[1] / 'docs/setup/repository-settings.json'
 RULE_KEYS = ('name', 'target', 'enforcement', 'conditions', 'rules', 'bypass_actors')
 GENERAL_KEYS = {'delete_branch_on_merge', 'allow_update_branch', 'has_projects', 'has_downloads'}
+# Security features and whether GitHub offers them only on public repositories
+# (private repositories need a paid licence for secret scanning).
+SECURITY_PUBLIC_ONLY = {
+    'private_vulnerability_reporting': True,
+    'vulnerability_alerts': False,
+    'automated_security_fixes': False,
+    'secret_scanning': True,
+    'secret_scanning_push_protection': True,
+}
+ANALYSIS_KEYS = ('secret_scanning', 'secret_scanning_push_protection')
 
 
 class SetupError(Exception):
@@ -68,11 +79,15 @@ def rule_spec(rule):
 
 def load_config(path):
     value = json.loads(path.read_text(encoding='utf-8'))
-    if (set(value) != {'schema_version', 'repository', 'private_vulnerability_reporting', 'rulesets'}
-            or value['schema_version'] != 2):
+    if set(value) != {'schema_version', 'repository', 'security', 'rulesets'} or value['schema_version'] != 3:
         raise SetupError('Unsupported configuration schema.')
-    if type(value['private_vulnerability_reporting']) is not bool:
-        raise SetupError('private_vulnerability_reporting must be a boolean.')
+    security = value['security']
+    if set(security) != set(SECURITY_PUBLIC_ONLY) or any(type(v) is not bool for v in security.values()):
+        raise SetupError('Configuration must contain exactly the five documented boolean security features.')
+    if security['secret_scanning_push_protection'] and not security['secret_scanning']:
+        raise SetupError('Push protection requires secret scanning.')
+    if security['automated_security_fixes'] and not security['vulnerability_alerts']:
+        raise SetupError('Dependabot security updates require vulnerability alerts.')
     if set(value['repository']) != GENERAL_KEYS or any(type(v) is not bool for v in value['repository'].values()):
         raise SetupError('Configuration must contain exactly the four documented boolean repository settings.')
     names = []
@@ -114,7 +129,7 @@ def inspect(call, repo, config, report=True):
             actual = call('GET', endpoint)
             if rule_spec(actual) != rule_spec(desired):
                 plan.append(('PUT', endpoint, desired))
-    plan += vulnerability_reporting_plan(call, root, metadata, config, report)
+    plan += security_plan(call, root, metadata, config, report)
     changes = {k: v for k, v in config['repository'].items() if metadata.get(k) != v}
     # Install protection first, then enable branch cleanup.
     if changes:
@@ -122,18 +137,54 @@ def inspect(call, repo, config, report=True):
     return metadata, plan
 
 
-def vulnerability_reporting_plan(call, root, metadata, config, report):
-    """GitHub offers private vulnerability reporting only on public repositories."""
-    desired = config['private_vulnerability_reporting']
-    endpoint = root + '/private-vulnerability-reporting'
-    if metadata.get('visibility') != 'public':
-        if desired and report:
-            print(f'NOTE: private vulnerability reporting is available only for public repositories; '
-                  f'it is not applied while the destination is {metadata.get("visibility")}. '
-                  'Rerun the check after making the repository public.')
-        return []
-    enabled = bool((call('GET', endpoint) or {}).get('enabled'))
-    return [] if enabled == desired else [('PUT' if desired else 'DELETE', endpoint, None)]
+def missing(call, endpoint):
+    """GET an endpoint that answers 404 when its feature is off; True when it does."""
+    try:
+        return call('GET', endpoint), False
+    except SetupError as error:
+        if '(HTTP 404)' in str(error):
+            return None, True
+        raise
+
+
+def security_state(call, root, metadata, feature):
+    if feature == 'private_vulnerability_reporting':
+        return bool((call('GET', root + '/private-vulnerability-reporting') or {}).get('enabled'))
+    if feature == 'vulnerability_alerts':
+        return not missing(call, root + '/vulnerability-alerts')[1]
+    if feature == 'automated_security_fixes':
+        value, absent = missing(call, root + '/automated-security-fixes')
+        return not absent and bool((value or {}).get('enabled'))
+    analysis = metadata.get('security_and_analysis') or {}
+    return (analysis.get(feature) or {}).get('status') == 'enabled'
+
+
+def security_plan(call, root, metadata, config, report):
+    """Plan the security features; public-only ones are skipped, with a note, elsewhere."""
+    public = metadata.get('visibility') == 'public'
+    skipped = [name for name, only in SECURITY_PUBLIC_ONLY.items()
+               if only and not public and config['security'][name]]
+    if skipped and report:
+        print(f'NOTE: {", ".join(skipped)} apply only to public repositories here; they are not '
+              f'applied while the destination is {metadata.get("visibility")}. Rerun the check '
+              'after making the repository public.')
+    plan, analysis = [], {}
+    # Alerts before security updates, which depend on them.
+    for feature in ('private_vulnerability_reporting', 'vulnerability_alerts',
+                    'automated_security_fixes', *ANALYSIS_KEYS):
+        desired = config['security'][feature]
+        if feature in skipped or (SECURITY_PUBLIC_ONLY[feature] and not public):
+            continue
+        if security_state(call, root, metadata, feature) == desired:
+            continue
+        if feature in ANALYSIS_KEYS:
+            analysis[feature] = {'status': 'enabled' if desired else 'disabled'}
+        else:
+            endpoint = root + '/' + feature.replace('_', '-')
+            plan.append(('PUT' if desired else 'DELETE', endpoint, None))
+    if analysis:
+        plan.append(('PATCH', root, {'security_and_analysis': analysis}))
+    return plan
 
 
 def report_unmanaged(call, root, current, config):
@@ -149,6 +200,57 @@ def report_unmanaged(call, root, current, config):
               f'{detail.get("enforcement", "unknown enforcement")}) stays active. This script '
               'never changes or deletes it; delete it in the repository settings if a managed '
               'ruleset replaces it.')
+
+
+def evidence(call, repo, config, metadata, plan, mode, now=None):
+    """A dated Markdown record of the managed settings as GitHub reports them."""
+    root = f'repos/{repo}'
+    stamp = (now or datetime.now(timezone.utc)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    public = metadata.get('visibility') == 'public'
+    differs = {endpoint for method, endpoint, _ in plan if method == 'PUT' and '/rulesets/' in endpoint}
+    created = {payload['name'] for method, _, payload in plan if method == 'POST'}
+    current = pages(call, root + '/rulesets?includes_parents=false')
+    inherited = [r for r in pages(call, root + '/rulesets?includes_parents=true')
+                 if r.get('source_type') != 'Repository']
+    managed = {rule['name'] for rule in config['rulesets']}
+
+    def cell(value):
+        return 'on' if value is True else 'off' if value is False else str(value)
+
+    lines = ['# Repository settings evidence', '',
+             f'- Checked: **{stamp}** with `tools/setup_repository.py` ({mode})',
+             f'- Destination: `{metadata["full_name"]}`; visibility: {metadata["visibility"]}; '
+             f'default branch: `{metadata["default_branch"]}`',
+             f'- Result: **{"VERIFIED" if not plan else "DRIFT"}**', '',
+             '## General settings', '', '| Setting | Configured | Observed |', '| --- | --- | --- |']
+    lines += [f'| `{key}` | {cell(value)} | {cell(metadata.get(key))} |'
+              for key, value in config['repository'].items()]
+    lines += ['', '## Security features', '', '| Feature | Configured | Observed |', '| --- | --- | --- |']
+    for feature, value in config['security'].items():
+        observed = ('not applied (public repositories only)' if SECURITY_PUBLIC_ONLY[feature] and not public
+                    else cell(security_state(call, root, metadata, feature)))
+        lines.append(f'| `{feature}` | {cell(value)} | {observed} |')
+    lines += ['', '## Managed rulesets', '', '| Ruleset | ID | Status |', '| --- | --- | --- |']
+    for rule in config['rulesets']:
+        match = next((r for r in current if r['name'] == rule['name']), None)
+        if rule['name'] in created or match is None:
+            lines.append(f'| {rule["name"]} | — | missing |')
+        else:
+            status = 'differs' if f'{root}/rulesets/{match["id"]}' in differs else 'matches'
+            lines.append(f'| {rule["name"]} | {match["id"]} | {status} |')
+    unmanaged = [r for r in current if r.get('source_type', 'Repository') == 'Repository'
+                 and r['name'] not in managed]
+    lines += ['', '## Other rules', '',
+              f'- Unmanaged repository rulesets: {", ".join(r["name"] for r in unmanaged) or "none"}',
+              f'- Inherited rulesets: {", ".join(r["name"] for r in inherited) or "none"}',
+              '', 'Unmanaged settings are outside this record.']
+    return '\n'.join(lines) + '\n'
+
+
+def write_evidence(path, text):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding='utf-8', newline='\n')
+    print(f'Evidence written to {path}')
 
 
 def check_prerequisites(call, repo, metadata, config):
@@ -175,6 +277,10 @@ def run(args, call=api):
         raise SetupError('Destination must be an explicit owner/repository on github.com.')
     config = load_config(args.config)
     metadata, plan = inspect(call, args.repo, config)
+    mode = 'apply' if args.apply else 'check' if args.check else 'preview'
+    report = getattr(args, 'report', None)
+    if report and (not args.apply or not plan):
+        write_evidence(report, evidence(call, args.repo, config, metadata, plan, mode))
     if not plan:
         print('VERIFIED: all documented settings match. Unmanaged settings are outside this verification.')
         return 0
@@ -195,7 +301,9 @@ def run(args, call=api):
     for method, endpoint, payload in plan:
         call(method, endpoint, payload)
         print(f'Applied {method} {endpoint}')
-    _, remaining = inspect(call, args.repo, config, report=False)
+    metadata, remaining = inspect(call, args.repo, config, report=False)
+    if report:
+        write_evidence(report, evidence(call, args.repo, config, metadata, remaining, mode))
     if remaining:
         raise SetupError('Read-back verification failed; rerun preview to inspect remaining differences.')
     print('VERIFIED: all documented settings match after apply.')
@@ -210,6 +318,7 @@ def main():
     mode.add_argument('--apply', action='store_true', help='Apply changes, then verify')
     mode.add_argument('--check', action='store_true', help='Read-only verification; exit 1 for drift')
     parser.add_argument('--update-existing', action='store_true', help='Allow replacement of differing named rulesets')
+    parser.add_argument('--report', type=Path, help='Write a dated Markdown evidence record of the managed settings')
     args = parser.parse_args()
     if args.update_existing and not args.apply:
         parser.error('--update-existing requires --apply')
