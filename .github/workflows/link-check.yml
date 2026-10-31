@@ -4,7 +4,9 @@ name: Link check
 # demand. Relative links and anchors are checked offline by Repository
 # integrity (tests/test_check_links.py) on every change; external sites change
 # without a commit, so this check runs on a schedule and never blocks a merge.
-# Links into this repository are skipped: the offline check covers them.
+# Absolute links into this repository are not requested, because a private
+# repository answers 404 to anonymous requests; link to its files with
+# relative links, which the offline check covers.
 
 on:
   schedule:

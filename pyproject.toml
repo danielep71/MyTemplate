@@ -1,5 +1,6 @@
 # Quality settings for the repository's Python tooling. The tools and tests
-# need only the standard library (plus PyYAML for the workflow control tests).
+# need only the Python standard library, plus PyYAML for the workflow control
+# tests; they also run Node.js for the label scripts and git to list files.
 # Ruff and mypy are CI and development tools, installed from
 # tools/requirements-quality-ci.txt.
 
