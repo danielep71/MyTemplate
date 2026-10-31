@@ -39,6 +39,7 @@ This section applies only to the template repository. In a repository generated 
 
 - This repository is the template that new workbook repositories are created from. Keep its files generic: each one must still be correct after it is copied into a new repository.
 - My reference repositories are `danielep71/K-SFTs` (primary) and `danielep71/K-SACCR` (secondary). Compare repository settings, issue labels, issue forms, and automation with them before changing the template.
+- My other workbook repositories, `danielep71/K-FRTB-SA`, `danielep71/K-LCR`, and `danielep71/K-NSFR`, are also compared: adopt what they do better, and report where they lag behind the template.
 - Port improvements in generic form. Do not copy their names, links, issue numbers, or history into template files; only this section and `docs/licenses/` may name them.
 - From a session on this repository, change only this repository. Read the reference repositories and any other repository only to compare them; for changes they need, write a message for a session dedicated to that repository instead of committing, pushing, or posting there.
 <!-- template-only:end -->
