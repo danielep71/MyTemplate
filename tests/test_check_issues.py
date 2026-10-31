@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 import check_issues  # noqa: E402
 from check_issues import Issue  # noqa: E402
+
 REPOSITORY = "example-org/sample-project"
 BLOCKED_LABEL = check_issues.BLOCKED
 READY = "## Dependencies and blocking status\n\n**Ready to start**: none.\n"

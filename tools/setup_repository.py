@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Apply the portable baseline through an authenticated GitHub CLI (github.com)."""
 import argparse
-from datetime import datetime, timezone
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
+from collections.abc import Callable
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
 from urllib.parse import quote
 
 CONFIG = Path(__file__).resolve().parents[1] / 'docs/setup/repository-settings.json'
@@ -24,12 +26,17 @@ SECURITY_PUBLIC_ONLY = {
 }
 ANALYSIS_KEYS = ('secret_scanning', 'secret_scanning_push_protection')
 
+# GitHub API values are JSON; a call takes a method, an endpoint and an optional payload.
+Json = Any
+Call = Callable[..., Json]
+Plan = list[tuple[str, str, Json]]
+
 
 class SetupError(Exception):
     pass
 
 
-def api(method, endpoint, payload=None):
+def api(method: str, endpoint: str, payload: Json = None) -> Json:
     command = ['gh', 'api', '--hostname', 'github.com', '--method', method,
                '-H', 'Accept: application/vnd.github+json',
                '-H', 'X-GitHub-Api-Version: 2022-11-28', endpoint]
@@ -50,8 +57,8 @@ def api(method, endpoint, payload=None):
     return json.loads(result.stdout) if result.stdout.strip() else None
 
 
-def pages(call, endpoint, key=None):
-    result = []
+def pages(call: Call, endpoint: str, key: str | None = None) -> list[Json]:
+    result: list[Json] = []
     page = 1
     while True:
         separator = '&' if '?' in endpoint else '?'
@@ -63,7 +70,7 @@ def pages(call, endpoint, key=None):
         page += 1
 
 
-def canonical(value):
+def canonical(value: Json) -> Json:
     """Rule arrays are sets for this baseline; ignore API ordering, not values."""
     if isinstance(value, dict):
         return {k: canonical(v) for k, v in sorted(value.items())}
@@ -72,12 +79,12 @@ def canonical(value):
     return value
 
 
-def rule_spec(rule):
+def rule_spec(rule: dict[str, Json]) -> Json:
     # Ignore response metadata, but preserve unknown rules/parameters in comparison.
     return canonical({k: rule.get(k, [] if k == 'bypass_actors' else None) for k in RULE_KEYS})
 
 
-def load_config(path):
+def load_config(path: Path) -> dict[str, Json]:
     value = json.loads(path.read_text(encoding='utf-8'))
     if set(value) != {'schema_version', 'repository', 'security', 'rulesets'} or value['schema_version'] != 3:
         raise SetupError('Unsupported configuration schema.')
@@ -90,7 +97,7 @@ def load_config(path):
         raise SetupError('Dependabot security updates require vulnerability alerts.')
     if set(value['repository']) != GENERAL_KEYS or any(type(v) is not bool for v in value['repository'].values()):
         raise SetupError('Configuration must contain exactly the four documented boolean repository settings.')
-    names = []
+    names: list[str] = []
     for rule in value['rulesets']:
         if set(rule) != set(RULE_KEYS) or rule['target'] not in ('branch', 'tag') or rule['enforcement'] != 'active':
             raise SetupError('Invalid baseline ruleset.')
@@ -99,10 +106,11 @@ def load_config(path):
         names.append(rule['name'])
     if len(names) != 5 or len(set(names)) != 5:
         raise SetupError('Expected five uniquely named baseline rulesets.')
-    return value
+    return dict(value)
 
 
-def inspect(call, repo, config, report=True):
+def inspect(call: Call, repo: str, config: dict[str, Json],
+            report: bool = True) -> tuple[dict[str, Json], Plan]:
     root = f'repos/{repo}'
     metadata = call('GET', root)
     if metadata.get('archived') or metadata.get('disabled'):
@@ -117,7 +125,7 @@ def inspect(call, repo, config, report=True):
         print('NOTE: inherited rules also apply; they are not modified or certified by this script.')
     if report:
         report_unmanaged(call, root, current, config)
-    plan = []
+    plan: Plan = []
     for desired in config['rulesets']:
         matches = [r for r in current if r['name'] == desired['name']]
         if len(matches) > 1:
@@ -137,7 +145,7 @@ def inspect(call, repo, config, report=True):
     return metadata, plan
 
 
-def missing(call, endpoint):
+def missing(call: Call, endpoint: str) -> tuple[Json, bool]:
     """GET an endpoint that answers 404 when its feature is off; True when it does."""
     try:
         return call('GET', endpoint), False
@@ -147,7 +155,7 @@ def missing(call, endpoint):
         raise
 
 
-def security_state(call, root, metadata, feature):
+def security_state(call: Call, root: str, metadata: dict[str, Json], feature: str) -> bool:
     if feature == 'private_vulnerability_reporting':
         return bool((call('GET', root + '/private-vulnerability-reporting') or {}).get('enabled'))
     if feature == 'vulnerability_alerts':
@@ -156,10 +164,11 @@ def security_state(call, root, metadata, feature):
         value, absent = missing(call, root + '/automated-security-fixes')
         return not absent and bool((value or {}).get('enabled'))
     analysis = metadata.get('security_and_analysis') or {}
-    return (analysis.get(feature) or {}).get('status') == 'enabled'
+    return bool((analysis.get(feature) or {}).get('status') == 'enabled')
 
 
-def security_plan(call, root, metadata, config, report):
+def security_plan(call: Call, root: str, metadata: dict[str, Json], config: dict[str, Json],
+                  report: bool) -> Plan:
     """Plan the security features; public-only ones are skipped, with a note, elsewhere."""
     public = metadata.get('visibility') == 'public'
     skipped = [name for name, only in SECURITY_PUBLIC_ONLY.items()
@@ -168,7 +177,8 @@ def security_plan(call, root, metadata, config, report):
         print(f'NOTE: {", ".join(skipped)} apply only to public repositories here; they are not '
               f'applied while the destination is {metadata.get("visibility")}. Rerun the check '
               'after making the repository public.')
-    plan, analysis = [], {}
+    plan: Plan = []
+    analysis: dict[str, dict[str, str]] = {}
     # Alerts before security updates, which depend on them.
     for feature in ('private_vulnerability_reporting', 'vulnerability_alerts',
                     'automated_security_fixes', *ANALYSIS_KEYS):
@@ -187,7 +197,7 @@ def security_plan(call, root, metadata, config, report):
     return plan
 
 
-def report_unmanaged(call, root, current, config):
+def report_unmanaged(call: Call, root: str, current: list[Json], config: dict[str, Json]) -> None:
     """Name repository rulesets outside the baseline; they stay active alongside it."""
     managed = {rule['name'] for rule in config['rulesets']}
     for ruleset in current:
@@ -202,7 +212,8 @@ def report_unmanaged(call, root, current, config):
               'ruleset replaces it.')
 
 
-def evidence(call, repo, config, metadata, plan, mode, now=None):
+def evidence(call: Call, repo: str, config: dict[str, Json], metadata: dict[str, Json],
+             plan: Plan, mode: str, now: datetime | None = None) -> str:
     """A dated Markdown record of the managed settings as GitHub reports them."""
     root = f'repos/{repo}'
     stamp = (now or datetime.now(timezone.utc)).strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -214,7 +225,7 @@ def evidence(call, repo, config, metadata, plan, mode, now=None):
                  if r.get('source_type') != 'Repository']
     managed = {rule['name'] for rule in config['rulesets']}
 
-    def cell(value):
+    def cell(value: Json) -> str:
         return 'on' if value is True else 'off' if value is False else str(value)
 
     lines = ['# Repository settings evidence', '',
@@ -247,13 +258,14 @@ def evidence(call, repo, config, metadata, plan, mode, now=None):
     return '\n'.join(lines) + '\n'
 
 
-def write_evidence(path, text):
+def write_evidence(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding='utf-8', newline='\n')
     print(f'Evidence written to {path}')
 
 
-def check_prerequisites(call, repo, metadata, config):
+def check_prerequisites(call: Call, repo: str, metadata: dict[str, Json],
+                        config: dict[str, Json]) -> None:
     root = f'repos/{repo}'
     branch = call('GET', root + '/branches/' + quote(metadata['default_branch'], safe=''))
     checks = pages(call, root + '/commits/' + branch['commit']['sha'] + '/check-runs?filter=latest', 'check_runs')
@@ -272,7 +284,7 @@ def check_prerequisites(call, repo, metadata, config):
         raise SetupError('Squash merging must be enabled for the release-branch baseline.')
 
 
-def run(args, call=api):
+def run(args: argparse.Namespace, call: Call = api) -> int:
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+', args.repo) or args.repo.split('/')[1] in ('.', '..'):
         raise SetupError('Destination must be an explicit owner/repository on github.com.')
     config = load_config(args.config)
@@ -310,7 +322,7 @@ def run(args, call=api):
     return 0
 
 
-def main():
+def main() -> int:
     if sys.version_info < (3, 11):
         print('ERROR: Python 3.11 or later is required.', file=sys.stderr)
         return 2
