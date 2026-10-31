@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 """Apply the portable baseline through an authenticated GitHub CLI (github.com)."""
+# Postponed annotations let the version check in main() run on Python 3.9 and older.
+from __future__ import annotations
+
 import argparse
 import json
 import os
@@ -184,7 +187,7 @@ def security_plan(call: Call, root: str, metadata: dict[str, Json], config: dict
     for feature in ('private_vulnerability_reporting', 'vulnerability_alerts',
                     'automated_security_fixes', *ANALYSIS_KEYS):
         desired = config['security'][feature]
-        if feature in skipped or (SECURITY_PUBLIC_ONLY[feature] and not public):
+        if SECURITY_PUBLIC_ONLY[feature] and not public:
             continue
         if security_state(call, root, metadata, feature) == desired:
             continue
