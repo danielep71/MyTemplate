@@ -99,10 +99,18 @@ class TargetDateTests(unittest.TestCase):
     def test_missing_milestone_is_reported_once(self) -> None:
         self.assertEqual(rules([issue(1, milestone=None, milestone_due=None)]), [(1, "milestone")])
 
+    def test_open_issue_in_a_closed_milestone_is_reported(self) -> None:
+        closed = Issue(1, "open", ("P3",), ("triage-person",), "v0.1.0",
+                       PLANNING.format("2026-11-04") + READY, "2026-11-30", "closed")
+        self.assertEqual(rules([closed]), [(1, "milestone")])
+
     def test_due_date_comes_from_the_api_milestone(self) -> None:
         item = {"number": 1, "state": "open", "labels": [], "assignees": [], "body": "",
                 "milestone": {"title": "v0.1.0", "due_on": "2026-11-30T08:00:00Z"}}
         self.assertEqual(check_issues.issue_from_api(item).milestone_due, "2026-11-30")
+        self.assertEqual(check_issues.issue_from_api(item).milestone_state, "open")
+        item["milestone"] = {"title": "v0.1.0", "due_on": None, "state": "closed"}
+        self.assertEqual(check_issues.issue_from_api(item).milestone_state, "closed")
         item["milestone"] = {"title": "v0.1.0", "due_on": None}
         self.assertIsNone(check_issues.issue_from_api(item).milestone_due)
 

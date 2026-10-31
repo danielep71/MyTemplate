@@ -1,5 +1,7 @@
-# Hash-locked CPython 3.13 / Linux x86_64 CI requirements for Ruff and mypy.
-# Every hash was checked against PyPI. Regenerate only after reviewing package
+# Hash-locked CI requirements for Ruff and mypy. Every package has a hash for
+# CPython 3.13 on Linux x86_64, the CI platform; Dependabot updates may add
+# hashes for other platforms, so the set is complete only there. Every hash
+# was checked against PyPI. Regenerate only after reviewing package
 # provenance and wheel hashes; Dependabot proposes updates (.github/dependabot.yml).
 # CI installs with --only-binary=:all: --require-hashes.
 

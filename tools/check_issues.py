@@ -49,6 +49,7 @@ class Issue:
     body: str
     # Calendar date (YYYY-MM-DD) of the milestone's due_on, as GitHub stores it.
     milestone_due: str | None = None
+    milestone_state: str = "open"
 
 
 @dataclass(frozen=True)
@@ -68,6 +69,7 @@ def issue_from_api(item: Mapping[str, Any]) -> Issue:
         milestone=str(milestone["title"]) if milestone else None,
         body=str(item.get("body") or ""),
         milestone_due=str(milestone["due_on"])[:10] if milestone and milestone.get("due_on") else None,
+        milestone_state=str(milestone.get("state") or "open").lower() if milestone else "open",
     )
 
 
@@ -144,6 +146,10 @@ def metadata_findings(issue: Issue, assignee: str) -> list[Finding]:
                                 "has P1 without bug: P1 is reserved for confirmed calculation bugs"))
     if not issue.milestone:
         findings.append(Finding(issue.number, "milestone", "has no milestone"))
+    elif issue.milestone_state != "open":
+        findings.append(Finding(issue.number, "milestone",
+                                f"is in the closed milestone {issue.milestone!r}: "
+                                "move it to an open milestone"))
     return findings
 
 
