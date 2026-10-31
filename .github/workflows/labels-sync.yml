@@ -10,13 +10,11 @@ on:
   pull_request:
     paths:
       - .github/labels.json
-      - .github/label-policy.json
       - .github/scripts/labels-sync.mjs
       - .github/workflows/labels-sync.yml
   push:
     paths:
       - .github/labels.json
-      - .github/label-policy.json
       - .github/scripts/labels-sync.mjs
       - .github/workflows/labels-sync.yml
   workflow_dispatch:
@@ -47,11 +45,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Exercise validation, overlays, and reconciliation paths
-        run: node .github/scripts/labels-sync.mjs --policy .github/label-policy.json --self-test
+      - name: Exercise validation and reconciliation paths
+        run: node .github/scripts/labels-sync.mjs --self-test
 
       - name: Validate the canonical manifest
-        run: node .github/scripts/labels-sync.mjs --policy .github/label-policy.json --mode validate
+        run: node .github/scripts/labels-sync.mjs --mode validate
 
   reconcile:
     name: Reconcile live labels
@@ -70,10 +68,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Exercise validation, overlays, and reconciliation paths
-        run: node .github/scripts/labels-sync.mjs --policy .github/label-policy.json --self-test
+      - name: Exercise validation and reconciliation paths
+        run: node .github/scripts/labels-sync.mjs --self-test
 
-      - name: Reconcile and verify the versioned label selection
+      - name: Reconcile and verify the versioned label catalogue
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node .github/scripts/labels-sync.mjs --policy .github/label-policy.json --mode reconcile --repository "${GITHUB_REPOSITORY}"
+        run: node .github/scripts/labels-sync.mjs --mode reconcile --repository "${GITHUB_REPOSITORY}"
