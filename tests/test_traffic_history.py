@@ -10,7 +10,7 @@ import sys
 import tempfile
 import unittest
 from collections.abc import Iterator, Sequence
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -45,7 +45,7 @@ def stats(stars: int = 1, forks: int = 0, watchers: int = 1, open_issues: int = 
 
 
 def at(stamp: str) -> datetime:
-    return datetime.fromisoformat(stamp).replace(tzinfo=timezone.utc)
+    return datetime.fromisoformat(stamp).replace(tzinfo=UTC)
 
 
 class Workspace:

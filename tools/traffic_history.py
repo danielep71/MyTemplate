@@ -28,7 +28,7 @@ import re
 import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -511,7 +511,7 @@ def parse_time(value: str) -> datetime:
         raise argparse.ArgumentTypeError(f"invalid timestamp {value!r}") from error
     if parsed.tzinfo is None:
         raise argparse.ArgumentTypeError("the timestamp needs a UTC offset")
-    return parsed.astimezone(timezone.utc)
+    return parsed.astimezone(UTC)
 
 
 def parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
@@ -523,7 +523,7 @@ def parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     merge_command.add_argument("--data", type=Path, required=True,
                                help="history directory (data/ on traffic-history)")
     merge_command.add_argument("--collected-at", type=parse_time,
-                               default=datetime.now(timezone.utc).replace(microsecond=0),
+                               default=datetime.now(UTC).replace(microsecond=0),
                                help="UTC time of the collection (default: now)")
     merge_command.add_argument("--summary", type=Path, help="append a Markdown report here")
     init_command = commands.add_parser("init", help="create empty history files")
