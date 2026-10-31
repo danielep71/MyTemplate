@@ -8,6 +8,7 @@ resolve by hand (docs/repo_governance/ISSUE_LABELS.md).
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import os
 import re
@@ -24,6 +25,14 @@ PRIORITIES = ("P1", "P2", "P3")
 BLOCKED = "blocked"
 FORM_PRIORITIES = {"bug.yml": "P2", "enhancement.yml": "P3", "documentation.yml": "P3",
                    "security-contact.yml": "P2"}
+# Forms whose reporter proposes the target end date; triage adds it to the others.
+TARGET_DATE_FORMS = ("bug.yml", "enhancement.yml", "documentation.yml")
+# The planning line triage writes, or the field an issue form renders. Each
+# captures its whole value, so an invalid line never falls back to the form.
+PLANNED_TARGET = re.compile(r"^[ \t]*[-*][ \t]*Target end date:[ \t]*(.*?)[ \t]*$", re.I | re.M)
+FORM_TARGET = re.compile(
+    r"^###\s+(?:🗓️\s*)?Target end date(?:\s*\(Europe/Rome\))?\s*$\n\s*(.*?)[ \t]*$", re.I | re.M)
+ROME_SUFFIX = re.compile(r"\s*\(Europe/Rome\)$", re.I)
 DEPENDENCY_STATUS_WORDS = re.compile(r"block|ready|waiting|depend|on[ -]hold|prerequisite", re.I)
 HEADING = re.compile(r"^#{2,3}\s+(.*)$")
 EXTERNAL = re.compile(r"^\s*(?:[-*]\s*)?external condition:\s*\S", re.I)
@@ -38,6 +47,8 @@ class Issue:
     assignees: tuple[str, ...]
     milestone: str | None
     body: str
+    # Calendar date (YYYY-MM-DD) of the milestone's due_on, as GitHub stores it.
+    milestone_due: str | None = None
 
 
 @dataclass(frozen=True)
@@ -56,6 +67,7 @@ def issue_from_api(item: Mapping[str, Any]) -> Issue:
         assignees=tuple(str(user["login"]) for user in item.get("assignees", [])),
         milestone=str(milestone["title"]) if milestone else None,
         body=str(item.get("body") or ""),
+        milestone_due=str(milestone["due_on"])[:10] if milestone and milestone.get("due_on") else None,
     )
 
 
@@ -82,6 +94,40 @@ def references(lines: Iterable[str], repository: str, own: int) -> set[int]:
         found.update(int(n) for n in url.findall(line))
     found.discard(own)
     return found
+
+
+def target_end_date(body: str) -> str | None:
+    """Read the planning line or the issue-form field without guessing a date."""
+    match = PLANNED_TARGET.search(body) or FORM_TARGET.search(body)
+    return ROME_SUFFIX.sub("", match.group(1)) if match else None
+
+
+def iso_date(text: str | None) -> dt.date | None:
+    if text is None or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
+        return None
+    try:
+        return dt.date.fromisoformat(text)
+    except ValueError:
+        return None
+
+
+def target_date_findings(issue: Issue) -> list[Finding]:
+    """The target end date must be a real ISO date before the milestone's due date."""
+    target = iso_date(target_end_date(issue.body))
+    if target is None:
+        return [Finding(issue.number, "target-date",
+                        "needs a valid ISO YYYY-MM-DD target end date (Europe/Rome)")]
+    if not issue.milestone:
+        return []  # already reported by the milestone rule
+    due = iso_date(issue.milestone_due)
+    if due is None:
+        return [Finding(issue.number, "milestone-due",
+                        f"milestone {issue.milestone!r} has no due date, so the target end "
+                        "date cannot be checked against it")]
+    if target >= due:
+        return [Finding(issue.number, "milestone-due",
+                        f"target end date {target} must be before the milestone due date {due}")]
+    return []
 
 
 def metadata_findings(issue: Issue, assignee: str) -> list[Finding]:
@@ -138,6 +184,7 @@ def audit(issues: Sequence[Issue], states: Mapping[int, str], repository: str,
         if issue.state != "open":
             continue
         findings += metadata_findings(issue, assignee)
+        findings += target_date_findings(issue)
         findings += dependency_findings(issue, states, repository, pulls)
         if catalogue is not None:
             findings += [Finding(issue.number, "catalogue", f"has label {label!r}, "
@@ -193,6 +240,9 @@ def config_findings(root: Path) -> list[str]:
             problems.append(f"{name} must assign {assignee}")
         if not re.search(r"^\s*id:\s*dependencies\s*$", text, re.M):
             problems.append(f"{name} has no dependencies field")
+        if name in TARGET_DATE_FORMS and not re.search(r"^\s*id:\s*target_end_date\s*$",
+                                                       text, re.M):
+            problems.append(f"{name} has no target end date field")
     config = forms / "config.yml"
     if not config.is_file() or not re.search(r"^blank_issues_enabled:\s*false\s*$",
                                              config.read_text(encoding="utf-8"), re.M):

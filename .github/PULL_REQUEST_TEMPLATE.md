@@ -47,7 +47,7 @@ For a bot-authored PR, record my review of the final head. -->
 ## ☑️ Checklist
 
 - [ ] The base is the default branch or the active release branch, as stated above.
-- [ ] Each linked issue has the assignee, exactly one priority label and a milestone; this PR has no milestone, links the relevant issues and carries appropriate labels.
+- [ ] Each linked issue has the assignee, exactly one priority label, a milestone and a target end date before the milestone's due date; this PR has no milestone, links the relevant issues and carries appropriate labels.
 - [ ] Scope is focused: no unrelated changes, local artifacts or generated output.
 - [ ] Documentation affected by the change is updated.
 - [ ] No tokens, credentials, real portfolio or client data.

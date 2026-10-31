@@ -10,7 +10,7 @@ This repository defines 20 issue labels, each with a name, description, and colo
 | --- | --- |
 | Sync issue labels | Validates pull requests; reconciles labels after a catalogue change lands on the default branch or a manual run on the default branch. Verifies the exact live result. |
 | Detect issue-label drift | Checks daily at 05:17 UTC and manually; PR runs use offline fixtures. Reports drift without modifying labels. |
-| Issue triage | Audits open issues on issue events or manual runs. Reports missing assignee, priority, milestone, dependency section, invalid labels, and inconsistent blocked status. |
+| Issue triage | Audits open issues on issue events or manual runs. Reports missing assignee, priority, milestone, target end date, dependency section, invalid labels, and inconsistent blocked status. |
 | Keep milestones issue-only | Removes any milestone set on a pull request, on each pull-request event and in a daily and manual scan of every pull request. It never checks out pull-request code. |
 | Dependabot (`.github/dependabot.yml`) | Opens weekly grouped pull requests for the SHA-pinned GitHub Actions, the hash-locked configuration parser, and the hash-locked Python quality tools, labelled `ci` and `P3` and assigned to me. Nothing merges automatically. |
 
@@ -21,7 +21,7 @@ Among these workflows, only synchronization has `issues: write` and only *Keep m
 1. Enable Actions and run **Sync issue labels** from the default branch. GitHub template creation copies files; run synchronization to establish the live labels.
 2. To add labels for a generated repository, such as one per regulatory regime, add them to the `labels` list in `.github/labels.json`, sorted case-insensitively by name, then add each one to the catalogue and usage tables below and update the label counts. **Repository integrity** checks all three.
 3. My GitHub account, `danielep71`, is the assignee in the four issue forms (`assignees`) and in `.github/dependabot.yml`; the triage check reads it from `bug.yml`. If someone else maintains a generated repository, replace my account in those five files. **Repository integrity** fails if they disagree.
-4. Create project milestones, give each open issue exactly one priority and a milestone, and assign it to me (or the account configured for a generated repository). Use `blocked` only for a named open prerequisite or `External condition:`. P1 is reserved for confirmed calculation bugs.
+4. Create project milestones with due dates, give each open issue exactly one priority, a milestone, and a target end date before that milestone's due date, and assign it to me (or the account configured for a generated repository). Use `blocked` only for a named open prerequisite or `External condition:`. P1 is reserved for confirmed calculation bugs.
 5. Label validation covers pull requests to every branch. Live synchronization runs only on the current default branch, including after a rename.
 
 **Keep** the label manifest, scripts, all four workflows, issue forms, triage checker/tests, and this guide after bootstrap. They provide ongoing maintenance and must not be deleted with one-time repository setup files.
@@ -39,6 +39,14 @@ Every issue has exactly one priority and the type labels that fit the work. Pull
 | `P3` | Non-blocking quality, testing, documentation, setup, or technical-debt work. Default of the enhancement and documentation forms and of Dependabot pull requests. |
 
 A form sets the default priority; triage confirms or changes it. Raise a bug to `P1` only once the calculation defect is confirmed.
+
+Every open issue also needs a target end date: an ISO `YYYY-MM-DD` calendar date (Europe/Rome) earlier than the due date of its milestone. The bug, enhancement, and documentation forms ask for it in the *Target end date* field. On other issues, including private security contacts, add it during triage as a line in the issue body:
+
+```text
+- Target end date: 2026-12-31 (Europe/Rome)
+```
+
+When both are present, that line takes precedence over the form field, so edit the line to reschedule. Triage reports a missing or invalid date (`target-date`), and a milestone without a due date or a target end date on or after it (`milestone-due`).
 
 ### Types
 
