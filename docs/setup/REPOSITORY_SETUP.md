@@ -4,7 +4,7 @@
 
 **From template files to a configured GitHub repository**
 
-[![Scope](https://img.shields.io/badge/Scope-4_settings_%C2%B7_5_rulesets-00338D?style=flat-square)](#-what-this-applies)
+[![Scope](https://img.shields.io/badge/Scope-5_settings_%C2%B7_5_rulesets-00338D?style=flat-square)](#-what-this-applies)
 [![Mode](https://img.shields.io/badge/Default-Preview_only-005EB8?style=flat-square)](#-launch-sequence)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](#-before-you-start)
 [![Verification](https://img.shields.io/badge/Verification-Read_back_after_apply-00875A?style=flat-square)](#-verification-and-recovery)
@@ -82,6 +82,12 @@ Replacement removes additional rules or bypasses inside that named ruleset.
 Rulesets with other names and inherited organization rules remain unchanged.
 Duplicate managed names are rejected.
 
+When you adopt an existing repository, its rulesets may cover the same branches
+and tags under other names. The preview names every such unmanaged ruleset with
+its target, ref patterns and enforcement. It stays active after apply, with its
+own rules and bypasses, so delete the ones that a managed ruleset replaces in
+**Settings → Rules → Rulesets**. The script never deletes a ruleset.
+
 The destination is always explicit; it is never inferred from the current directory.
 The default JSON path is relative to the script, so it also works from another
 working directory. Use `--config PATH` for a reviewed baseline with the same schema.
@@ -99,13 +105,13 @@ of the [settings reference](../repo_governance/SETTINGS.md).
 
 | Layer | Managed configuration |
 | --- | --- |
-| **General · 4 settings** | Delete merged head branches; suggest PR branch updates; disable Projects; disable the legacy downloads flag. |
+| **General · 5 settings** | Delete merged head branches; suggest PR branch updates; disable Projects; disable the legacy downloads flag; enable private vulnerability reporting on a public repository (skipped with a note otherwise). |
 | **Protection · 5 rulesets** | Default branch, release branches, independent release-branch deletion protection, release tags, and traffic history. |
 | **Enforcement** | Active rulesets with no bypass actors or ref exclusions. `Protect main` targets `~DEFAULT_BRANCH`, not a fixed branch name. |
 | **Verification** | All pages are read; full rule definitions are compared without response metadata; managed settings are read back after apply. |
 
-**Outside this baseline:** visibility, template mode, security switches (Dependabot,
-CodeQL, Secret Protection), Actions policy, Pages, secrets, environments, labels,
+**Outside this baseline:** visibility, template mode, security switches (Dependabot
+alerts and security updates, CodeQL, Secret Protection), Actions policy, Pages, secrets, environments, labels,
 collaborators and integrations. Configure these separately where required.
 The script creates no branches, tags, releases or PRs. Destination defaults and
 inherited policies may impose additional restrictions.
@@ -122,6 +128,7 @@ inherited policies may impose additional restrictions.
 | File or setting | Action in the new repository | Reason / dependency |
 | --- | --- | --- |
 | `AGENTS.md` | **Adapt** | Delete the template-only section first; keep the remaining instructions that still apply to the project. |
+| `SECURITY.md` | **Keep and adapt** | Names the private reporting channel and response targets. Adjust supported versions and scope to the project. |
 | `README.md` | **Adapt** | Replace the MyTemplate title and introduction with the project's purpose, installation and usage. Keep or replace setup links deliberately. |
 | `LICENSE` | **Keep or replace** | MPL-2.0 by default. The integrity workflow requires a non-empty `LICENSE`. |
 | `docs/licenses/` | **Keep** | Notice and license text for the files listed in `THIRD_PARTY_NOTICES.txt`, which remain under MPL-2.0 whatever license you choose. |
@@ -130,6 +137,7 @@ inherited policies may impose additional restrictions.
 | `tools/setup_repository.py` | **Keep** | Provides preview, apply and verification for future maintenance. |
 | `tests/test_setup_repository.py` | **Keep while retaining setup tooling** | Imports the setup script and reads its JSON configuration. |
 | `docs/setup/REPOSITORY_SETUP.md` | **Keep or retire after handover** | Optional operational guide; remove links to it if you retire it. |
+| `.github/dependabot.yml` | **Keep** | Proposes updates to the SHA-pinned Actions. Set `target-branch` if development happens on a release branch. |
 | `.github/workflows/repository-integrity.yml` | **Keep and evolve** | Supplies the required `Repository integrity` check. Add project-specific checks as the project grows. |
 | GitHub **Template repository** setting | **Review separately** | Choose whether the new project should itself be reusable as a template; the setup script does not change this flag. |
 

@@ -17,6 +17,14 @@ class CatalogueDocumentationTests(unittest.TestCase):
                     for label in manifest['labels']]
         self.assertEqual(rows, expected)
 
+    def test_usage_guide_covers_every_label_once(self):
+        manifest = json.loads((ROOT / '.github/labels.json').read_text(encoding='utf-8'))
+        guide = (ROOT / 'docs/repo_governance/ISSUE_LABELS.md').read_text(encoding='utf-8')
+        section = re.search(r'^## 🧭 Using the labels$(.*?)^## ', guide, re.M | re.S).group(1)
+        names = re.findall(r'^\| `([^`]+)` \|', section, re.M)
+        self.assertEqual(sorted(names, key=str.lower),
+                         sorted((label['name'] for label in manifest['labels']), key=str.lower))
+
     def test_documented_label_counts_match_the_catalogue(self):
         manifest = json.loads((ROOT / '.github/labels.json').read_text(encoding='utf-8'))
         expected = str(len(manifest['labels']))
@@ -30,6 +38,35 @@ class CatalogueDocumentationTests(unittest.TestCase):
                        for badge, prose in pattern.findall(text)]
         self.assertTrue(counts, 'no documented label counts found')
         self.assertEqual([item for item in counts if item[1] != expected], [])
+
+
+def yaml_list(text, key):
+    """Return the block-list items under ``key:`` in a simple YAML file."""
+    items, indent = [], None
+    for line in text.splitlines():
+        stripped = line.strip()
+        if indent is None:
+            if stripped == f'{key}:':
+                indent = len(line) - len(line.lstrip())
+            continue
+        if stripped.startswith('- ') and len(line) - len(line.lstrip()) > indent:
+            items.append(stripped[2:].strip().strip('"\''))
+        elif stripped:
+            indent = None
+    return items
+
+
+class DependabotTests(unittest.TestCase):
+    def test_labels_exist_and_assignee_matches_the_issue_forms(self):
+        text = (ROOT / '.github/dependabot.yml').read_text(encoding='utf-8')
+        manifest = json.loads((ROOT / '.github/labels.json').read_text(encoding='utf-8'))
+        catalogue = {label['name'] for label in manifest['labels']}
+        labels = yaml_list(text, 'labels')
+        self.assertTrue(labels)
+        self.assertEqual([label for label in labels if label not in catalogue], [])
+        form = (ROOT / '.github/ISSUE_TEMPLATE/bug.yml').read_text(encoding='utf-8')
+        assignee = re.search(r'^assignees:\s*\[\s*"?([^",\]]+)"?\s*\]', form, re.M).group(1)
+        self.assertEqual(set(yaml_list(text, 'assignees')), {assignee})
 
 
 class TemplateOnlyContentTests(unittest.TestCase):
