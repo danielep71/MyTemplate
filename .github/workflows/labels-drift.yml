@@ -98,7 +98,9 @@ jobs:
           path: |
             test-results/labels-drift.json
             test-results/labels-drift.md
-          if-no-files-found: error
+          # A comparison that failed before writing evidence is already
+          # reported by its own step; do not report it twice as an upload error.
+          if-no-files-found: warn
           retention-days: 30
           compression-level: 9
 

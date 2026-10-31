@@ -498,6 +498,7 @@ class FailureTests(unittest.TestCase):
             ([{"timestamp": "2026-10-14T00:00:00Z", "count": -1, "uniques": 1}], "non-negative"),
             ([{"timestamp": "2026-10-14T00:00:00Z", "count": True, "uniques": 1}], "non-negative"),
             ([{"timestamp": "2026-10-14T00:00:00Z", "count": 1, "uniques": 1}] * 2, "duplicate"),
+            ([{"timestamp": "2026-02-30T00:00:00Z", "count": 1, "uniques": 1}], "invalid date"),
         ]
         for views, message in cases:
             with self.subTest(message=message), workspace() as ws:
@@ -516,6 +517,10 @@ class FailureTests(unittest.TestCase):
                                   "2026-10-01T06:00:00Z,2026-10-01T06:00:00Z\n", "invalid date"),
                                  (traffic_history.render(DAILY, []) + "2026-10-01,1\n",
                                   "number of fields"),
+                                 (traffic_history.render(DAILY, []) + "2026-02-30,1,1,2026-10-01T06:00:00Z,2026-10-01T06:00:00Z,1,1,2026-10-01T06:00:00Z,2026-10-01T06:00:00Z\n",
+                                  "invalid date"),
+                                 (traffic_history.render(DAILY, []) + "2026-10-01,1,1,2026-10-01T06:00:00Z,2026-10-01T06:00:00Z,1,1,2026-10-01T06:00:00Z,2026-10-01T06:00:00Z\n"
+                                  + "2026-10-01,1,1,2026-10-01T06:00:00Z,2026-10-01T06:00:00Z,1,1,2026-10-01T06:00:00Z,2026-10-01T06:00:00Z\n", "duplicate row for 2026-10-01"),
                                  (traffic_history.render(DAILY, [])
                                   + "2026-10-01,1,1,t,2026-10-01T06:00:00Z,1,1,2026-10-01T06:00:00Z,"
                                   "2026-10-01T06:00:00Z\n", "invalid views_collected_at"),

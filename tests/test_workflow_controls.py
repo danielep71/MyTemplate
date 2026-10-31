@@ -124,6 +124,7 @@ class WorkflowControlTests(unittest.TestCase):
 
     def test_milestone_workflow_never_runs_pull_request_code(self):
         document = workflows()['pr-milestones.yml']
+        self.assertIn('github.event.pull_request.number', document['concurrency']['group'])
         self.assertEqual(set(document['on']), {'push', 'pull_request_target', 'schedule', 'workflow_dispatch'})
         self.assertEqual(document['on']['pull_request_target'],
                          {'types': ['opened', 'reopened', 'edited', 'milestoned']})
