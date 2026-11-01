@@ -15,8 +15,7 @@ information.
   GitHub's **Report content** option on that item, or report the account to
   GitHub.
 - For anything else, or if you prefer to write to me, use the contact details
-  on the repository owner's GitHub profile. Do not describe the incident in a
-  public issue.
+  on my GitHub profile. Do not describe the incident in a public issue.
 
 I read every report, keep the reporter's identity private, and respond as the
 Contributor Covenant's enforcement guidelines describe, from a private
