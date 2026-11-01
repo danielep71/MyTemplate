@@ -151,14 +151,34 @@ class WorkflowControlTests(unittest.TestCase):
         gate = jobs['availability']['steps'][0]
         self.assertIn('.visibility', gate['run'])
         self.assertEqual(gate['env']['CODE_SCANNING'], '${{ vars.CODE_SCANNING }}')
-        analyze = jobs['analyze']
-        self.assertEqual(analyze['needs'], 'availability')
-        self.assertEqual(analyze['if'], "needs.availability.outputs.enabled == 'true'")
-        self.assertEqual(sorted(analyze['strategy']['matrix']['language']),
-                         ['actions', 'javascript-typescript', 'python'])
-        uses = [step['uses'].split('@')[0] for step in analyze['steps'] if 'uses' in step]
-        self.assertEqual(uses, ['actions/checkout', 'github/codeql-action/init',
-                                'github/codeql-action/analyze'])
+        expected = {
+            'analyze': ("needs.availability.outputs.enabled == 'true' && "
+                        "github.event_name != 'pull_request'",
+                        ['actions/checkout', 'github/codeql-action/init',
+                         'github/codeql-action/analyze']),
+            'analyze-pr': ("needs.availability.outputs.enabled == 'true' && "
+                           "github.event_name == 'pull_request'",
+                           ['actions/checkout', 'github/codeql-action/init',
+                            'github/codeql-action/analyze', 'actions/upload-artifact']),
+        }
+        for job_id, (condition, sequence) in expected.items():
+            with self.subTest(job=job_id):
+                job = jobs[job_id]
+                self.assertEqual(job['needs'], 'availability')
+                self.assertEqual(job['if'], condition)
+                self.assertEqual(sorted(job['strategy']['matrix']['language']),
+                                 ['actions', 'javascript-typescript', 'python'])
+                steps = [step for step in job['steps'] if 'uses' in step]
+                self.assertEqual([step['uses'].split('@')[0] for step in steps], sequence)
+                self.assertEqual(steps[1]['with']['queries'], 'security-extended')
+        # Pull request analysis writes nothing to code scanning.
+        self.assertEqual(jobs['analyze-pr']['permissions'], {'contents': 'read'})
+        pr_analyze = jobs['analyze-pr']['steps'][2]['with']
+        self.assertEqual(pr_analyze['upload'], 'never')
+        self.assertIs(pr_analyze['upload-database'], False)
+        artifact = jobs['analyze-pr']['steps'][3]['with']
+        self.assertEqual(artifact['path'], pr_analyze['output'])
+        self.assertEqual(artifact['if-no-files-found'], 'error')
 
     def test_integrity_checks_that_code_scanning_covers_the_default_branch(self):
         name, job_id = REQUIRED_JOB
