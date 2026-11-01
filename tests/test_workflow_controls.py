@@ -248,6 +248,26 @@ class WorkflowControlTests(unittest.TestCase):
             with self.subTest(ecosystem=update['package-ecosystem']):
                 self.assertNotIn('milestone', update)
                 self.assertEqual([label for label in update['labels'] if label in {'P1', 'P2', 'P3'}], ['P3'])
+                # One weekly pull request per ecosystem, at a stated local time.
+                schedule = update['schedule']
+                self.assertEqual(schedule['interval'], 'weekly')
+                self.assertTrue({'day', 'time', 'timezone'} <= set(schedule), schedule)
+                self.assertIsInstance(update.get('open-pull-requests-limit'), int)
+                self.assertTrue(update.get('commit-message', {}).get('prefix'))
+                # A catch-all group keeps related pins, such as CodeQL's init
+                # and analyze steps, in a single pull request.
+                self.assertTrue(any('*' in group.get('patterns', [])
+                                    for group in (update.get('groups') or {}).values()),
+                                'needs a group with pattern "*"')
+
+    def test_codeql_action_steps_share_one_pin(self):
+        pins = {step['uses'].split('@', 1)[1]
+                for document in workflows().values()
+                for job in document['jobs'].values()
+                for step in job.get('steps', [])
+                if str(step.get('uses', '')).startswith('github/codeql-action/')}
+        self.assertTrue(pins, 'no github/codeql-action steps found')
+        self.assertEqual(len(pins), 1, f'CodeQL action steps use different pins: {pins}')
 
 
 def milestone_script():
