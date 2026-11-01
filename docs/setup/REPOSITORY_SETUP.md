@@ -151,7 +151,7 @@ inherited policies may impose additional restrictions.
 | `.github/workflows/traffic-history.yml`, `tools/traffic_history.py`, `tests/test_traffic_history.py`, `docs/repo_governance/TRAFFIC.md` | **Keep; enable if wanted** | Optional traffic collection. It does nothing until you follow *Enabling* in `TRAFFIC.md`. Point the README's traffic badges at the new repository, or remove them; **Repository integrity** fails while they read another repository. Remove all four files and the badges together if you never want it, and update `docs/licenses/THIRD_PARTY_NOTICES.txt`, which lists the files. |
 | `pyproject.toml`, `tools/requirements-quality-ci.txt` | **Keep** | Ruff and strict mypy settings and their hash-locked versions; `tests/test_quality_gates.py` proves the complexity ceiling and strict mode are active. |
 | `.github/dependabot.yml`, `.github/requirements.txt` | **Keep** | Proposes updates to the SHA-pinned Actions, the hash-locked configuration parser that the workflow control tests use, and the hash-locked quality tools. Its `target-branch` names the active release branch: set it to this repository's release branch or remove it to target the default branch. **Repository integrity** fails while it names a branch that does not exist. |
-| `.github/workflows/codeql.yml` | **Keep** | Scans the Python, JavaScript and workflow code with CodeQL on pushes and pull requests to `main` and `release/**`, and weekly; results appear under **Security → Code scanning**. Leave GitHub's default setup off, because it rejects results from this workflow. Free on a public repository; on a private one it needs GitHub Code Security and the repository variable `CODE_SCANNING` set to `enabled`, otherwise it skips the analysis. If the default branch is not `main`, rename it in the workflow's `push` and `pull_request` branch lists; **Repository integrity** fails while they omit it. |
+| `.github/workflows/codeql.yml` | **Keep** | Scans the Python, JavaScript and workflow code with CodeQL's security-extended queries on pushes and pull requests to `main` and `release/**`, and weekly; results appear under **Security → Code scanning**. Pull requests are analyzed without write permission: their SARIF is kept as a 30-day artifact and they show no code scanning annotations. Leave GitHub's default setup off, because it rejects results from this workflow. Free on a public repository; on a private one it needs GitHub Code Security and the repository variable `CODE_SCANNING` set to `enabled`, otherwise it skips the analysis. If the default branch is not `main`, rename it in the workflow's `push` and `pull_request` branch lists; **Repository integrity** fails while they omit it. |
 | `tools/check_links.py`, `tests/test_check_links.py`, `.github/workflows/link-check.yml` | **Keep** | Check every Markdown link: relative links and anchors in **Repository integrity**, external links weekly. |
 | `docs/repo_governance/PULL_REQUESTS.md` | **Keep and adapt** | Final-head review procedure that the pull request template refers to. Adapt it if the project uses another automated reviewer. |
 | `.github/workflows/repository-integrity.yml` | **Keep and evolve** | Supplies the required `Repository integrity` check. Add project-specific checks as the project grows. |
@@ -224,8 +224,8 @@ settings, not every GitHub setting or inherited policy.
 
 Update the JSON and Markdown together when changing policy, review the preview,
 and run the offline tests before applying it. The tests also need Node.js, which
-runs the label scripts; the workflows set up Node.js 24. Install the pinned
-configuration parser once; without it the workflow control tests are skipped locally:
+runs the label scripts. Install the pinned configuration parser once; without it
+the workflow control tests are skipped locally:
 
 ```sh
 python -m pip install --require-hashes -r .github/requirements.txt
@@ -233,6 +233,12 @@ python -m unittest discover -s tests -v
 ```
 
 After that one-time installation, the tests require neither credentials nor network access.
+**Toolchain baseline.** The workflows set exact versions: Python 3.13.18, Python
+3.11.18 for the minimum-version job (the `python_version` in `pyproject.toml`), and
+Node.js 24.22.2 without the package-manager cache. Dependabot does not update
+these values: change them together, in every workflow, in one pull request. The
+workflow control tests reject floating versions and mixed versions.
+
 **Repository integrity** also runs Ruff and strict mypy on `tools/` (configured in
 `pyproject.toml`) and actionlint on the workflows. To run Ruff and mypy locally on
 CPython 3.13 for Linux x86_64, the platform the hashes in

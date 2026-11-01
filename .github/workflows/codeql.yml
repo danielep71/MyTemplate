@@ -4,7 +4,11 @@ name: CodeQL
 # label scripts (JavaScript) and the workflows themselves (Actions). It runs on
 # pushes to main and release branches, on pull requests into them, and weekly,
 # because new queries can find issues in unchanged code. Results appear under
-# Security -> Code scanning. The workflow is versioned here rather than
+# Security -> Code scanning. It runs the security-extended query suite. Pull
+# requests are analyzed by a separate job with no write permission: it uploads
+# nothing to code scanning and keeps the SARIF as a 30-day artifact, so pull
+# requests show no code scanning annotations; pushes after merging upload as
+# usual. The workflow is versioned here rather than
 # enabled as default setup, so generated repositories receive it, it follows
 # the same pinning and permission rules as every other workflow, and
 # Dependabot updates its action.
@@ -70,9 +74,10 @@ jobs:
           fi
 
   analyze:
+    # Pushes, the weekly schedule and manual runs: upload to code scanning.
     name: Analyze (${{ matrix.language }})
     needs: availability
-    if: needs.availability.outputs.enabled == 'true'
+    if: needs.availability.outputs.enabled == 'true' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -99,8 +104,55 @@ jobs:
           languages: ${{ matrix.language }}
           # None of the three languages needs a build.
           build-mode: none
+          queries: security-extended
 
       - name: Analyze
         uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           category: /language:${{ matrix.language }}
+
+  analyze-pr:
+    # Pull requests: analyze without any write permission, upload nothing to
+    # code scanning, and keep the SARIF as an artifact for review.
+    name: Analyze pull request (${{ matrix.language }})
+    needs: availability
+    if: needs.availability.outputs.enabled == 'true' && github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - actions
+          - javascript-typescript
+          - python
+    steps:
+      - name: Check out the pull request merge commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+
+      - name: Analyze without uploading
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          category: /language:${{ matrix.language }}
+          upload: never
+          upload-database: false
+          output: codeql-results
+
+      - name: Keep the SARIF results
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: codeql-pr-${{ matrix.language }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: codeql-results
+          if-no-files-found: error
+          retention-days: 30
