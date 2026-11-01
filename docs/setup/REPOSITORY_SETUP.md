@@ -224,8 +224,8 @@ settings, not every GitHub setting or inherited policy.
 
 Update the JSON and Markdown together when changing policy, review the preview,
 and run the offline tests before applying it. The tests also need Node.js, which
-runs the label scripts; the workflows set up Node.js 24. Install the pinned
-configuration parser once; without it the workflow control tests are skipped locally:
+runs the label scripts. Install the pinned configuration parser once; without it
+the workflow control tests are skipped locally:
 
 ```sh
 python -m pip install --require-hashes -r .github/requirements.txt
@@ -233,6 +233,12 @@ python -m unittest discover -s tests -v
 ```
 
 After that one-time installation, the tests require neither credentials nor network access.
+**Toolchain baseline.** The workflows set exact versions: Python 3.13.18, Python
+3.11.18 for the minimum-version job (the `python_version` in `pyproject.toml`), and
+Node.js 24.22.2 without the package-manager cache. Dependabot does not update
+these values: change them together, in every workflow, in one pull request. The
+workflow control tests reject floating versions and mixed versions.
+
 **Repository integrity** also runs Ruff and strict mypy on `tools/` (configured in
 `pyproject.toml`) and actionlint on the workflows. To run Ruff and mypy locally on
 CPython 3.13 for Linux x86_64, the platform the hashes in

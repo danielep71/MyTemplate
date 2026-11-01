@@ -211,6 +211,33 @@ class WorkflowControlTests(unittest.TestCase):
         self.assertGreater(jobs, 0)
         self.assertEqual(len(versions), 1, f'one Node.js version everywhere, found {versions}')
 
+    def test_toolchain_versions_are_exact_and_shared(self):
+        # Floating versions let a new patch release change CI without a commit.
+        exact = re.compile(r'^\d+\.\d+\.\d+$')
+        minimum_job = ('repository-integrity.yml', 'minimum-python')
+        minimum = re.search(r'^python_version = "(\d+\.\d+)"$',
+                            (ROOT / 'pyproject.toml').read_text(encoding='utf-8'), re.M).group(1)
+        python, node = set(), set()
+        for name, document in workflows().items():
+            for job_id, job in document['jobs'].items():
+                for step in job.get('steps', []):
+                    uses, settings = str(step.get('uses', '')), step.get('with') or {}
+                    with self.subTest(workflow=name, job=job_id, uses=uses):
+                        if uses.startswith('actions/setup-python@'):
+                            version = str(settings['python-version'])
+                            self.assertRegex(version, exact)
+                            if (name, job_id) == minimum_job:
+                                self.assertTrue(version.startswith(minimum + '.'),
+                                                f'the minimum-version job runs {minimum}.x')
+                            else:
+                                python.add(version)
+                        if uses.startswith('actions/setup-node@'):
+                            self.assertRegex(str(settings['node-version']), exact)
+                            self.assertIs(settings.get('package-manager-cache'), False)
+                            node.add(str(settings['node-version']))
+        self.assertEqual(len(python), 1, f'one Python version outside the minimum job, found {python}')
+        self.assertEqual(len(node), 1, f'one Node.js version everywhere, found {node}')
+
     def test_dependabot_covers_each_pinned_dependency_once(self):
         document = yaml.safe_load((ROOT / '.github/dependabot.yml').read_text(encoding='utf-8'))
         self.assertEqual(document['version'], 2)
