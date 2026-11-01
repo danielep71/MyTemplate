@@ -182,10 +182,13 @@ repository that prefers not to publish them can stop collecting them: in the
 workflow's *Fetch traffic from the GitHub API* step, remove
 `traffic/popular/referrers` and `traffic/popular/paths` from the request loop
 and write an empty list instead, for example `echo '[]' > "$RAW/referrers.json"`
-and the same for `paths.json`. The merge accepts empty lists, so `referrers.csv`
-and `paths.csv` keep only their headers, and the *New referrer* alert can no
-longer fire. Files already on the branch stay in its history, which the
-**Protect traffic history** ruleset keeps.
+and the same for `paths.json`. The merge accepts empty lists and records no
+rankings for new collection days, so the *New referrer* alert can no longer
+fire. The opt-out stops future collection only: rows from earlier days stay in
+`referrers.csv` and `paths.csv`, because the merge never removes other dates.
+To clear them from the current files, commit both files with only their header
+lines to `traffic-history`; earlier commits keep them in the branch history,
+which the **Protect traffic history** ruleset preserves.
 
 ## 🚨 Traffic alert
 
