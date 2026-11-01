@@ -18,8 +18,6 @@ closed, with a *Resolution* section.
 
 ## 🌿 Branches and pull requests
 
-- Name branches with a descriptive prefix, such as `docs/`, `fix/`, `feat/`,
-  `chore/` or `ci/`.
 - While a release branch such as `release/1.2.0` is active, start task branches
   from it and open the pull request against it; otherwise use the default
   branch. The [release branches](docs/repo_governance/PULL_REQUESTS.md#-release-branches)
@@ -30,8 +28,6 @@ closed, with a *Resolution* section.
 - Every pull request needs a passing **Repository integrity** check and a
   review of its final head, as the
   [pull request guide](docs/repo_governance/PULL_REQUESTS.md) describes.
-- Write commit messages with a short imperative subject and a body that says
-  why the change is needed.
 
 ## 🧪 Local checks
 
