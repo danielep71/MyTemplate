@@ -175,6 +175,18 @@ read its CSV files. The data is aggregate (counts, referrers and paths) and
 identifies no visitor. The counts include my own visits and every clone made
 by CI checkouts.
 
+GitHub shows top referrers and popular paths only to repository
+administrators. I publish them on purpose, public repositories included,
+because they are aggregate and show which sites and pages draw visitors. A
+repository that prefers not to publish them can stop collecting them: in the
+workflow's *Fetch traffic from the GitHub API* step, remove
+`traffic/popular/referrers` and `traffic/popular/paths` from the request loop
+and write an empty list instead, for example `echo '[]' > "$RAW/referrers.json"`
+and the same for `paths.json`. The merge accepts empty lists, so `referrers.csv`
+and `paths.csv` keep only their headers, and the *New referrer* alert can no
+longer fire. Files already on the branch stay in its history, which the
+**Protect traffic history** ruleset keeps.
+
 ## 🚨 Traffic alert
 
 After each collection the **Traffic alert** job compares the latest snapshot
