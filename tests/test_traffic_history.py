@@ -454,6 +454,17 @@ class AlertTests(unittest.TestCase):
             self.assertEqual(len(ws.rows(SNAPSHOTS)), 2)
             self.assertIsNone(traffic_history.alert(ws.data, "2026-12-20"))
 
+    def test_opting_out_later_keeps_earlier_rankings(self) -> None:
+        # The opt-out stops future collection; rows of earlier days stay.
+        with workspace() as ws:
+            ws.collect([("2026-10-13", 10, 1)])
+            ws.merge("2026-10-13T06:00:00")
+            ws.collect([("2026-10-14", 10, 1)], referrers=[], paths=[])
+            ws.merge("2026-10-14T06:00:00")
+            self.assertEqual([row["snapshot_date"] for row in ws.rows(REFERRERS)], ["2026-10-13"])
+            self.assertEqual([row["snapshot_date"] for row in ws.rows(PATHS)], ["2026-10-13"])
+            self.assertIsNone(traffic_history.alert(ws.data, "2026-12-20"))
+
     def test_counts_missing_from_the_older_snapshot_raise_nothing(self) -> None:
         legacy = ("snapshot_date,collected_at,first_date,last_date,"
                   "views_14d,unique_views_14d,clones_14d,unique_clones_14d\n"
