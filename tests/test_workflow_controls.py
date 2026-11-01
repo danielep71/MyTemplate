@@ -151,14 +151,34 @@ class WorkflowControlTests(unittest.TestCase):
         gate = jobs['availability']['steps'][0]
         self.assertIn('.visibility', gate['run'])
         self.assertEqual(gate['env']['CODE_SCANNING'], '${{ vars.CODE_SCANNING }}')
-        analyze = jobs['analyze']
-        self.assertEqual(analyze['needs'], 'availability')
-        self.assertEqual(analyze['if'], "needs.availability.outputs.enabled == 'true'")
-        self.assertEqual(sorted(analyze['strategy']['matrix']['language']),
-                         ['actions', 'javascript-typescript', 'python'])
-        uses = [step['uses'].split('@')[0] for step in analyze['steps'] if 'uses' in step]
-        self.assertEqual(uses, ['actions/checkout', 'github/codeql-action/init',
-                                'github/codeql-action/analyze'])
+        expected = {
+            'analyze': ("needs.availability.outputs.enabled == 'true' && "
+                        "github.event_name != 'pull_request'",
+                        ['actions/checkout', 'github/codeql-action/init',
+                         'github/codeql-action/analyze']),
+            'analyze-pr': ("needs.availability.outputs.enabled == 'true' && "
+                           "github.event_name == 'pull_request'",
+                           ['actions/checkout', 'github/codeql-action/init',
+                            'github/codeql-action/analyze', 'actions/upload-artifact']),
+        }
+        for job_id, (condition, sequence) in expected.items():
+            with self.subTest(job=job_id):
+                job = jobs[job_id]
+                self.assertEqual(job['needs'], 'availability')
+                self.assertEqual(job['if'], condition)
+                self.assertEqual(sorted(job['strategy']['matrix']['language']),
+                                 ['actions', 'javascript-typescript', 'python'])
+                steps = [step for step in job['steps'] if 'uses' in step]
+                self.assertEqual([step['uses'].split('@')[0] for step in steps], sequence)
+                self.assertEqual(steps[1]['with']['queries'], 'security-extended')
+        # Pull request analysis writes nothing to code scanning.
+        self.assertEqual(jobs['analyze-pr']['permissions'], {'contents': 'read'})
+        pr_analyze = jobs['analyze-pr']['steps'][2]['with']
+        self.assertEqual(pr_analyze['upload'], 'never')
+        self.assertIs(pr_analyze['upload-database'], False)
+        artifact = jobs['analyze-pr']['steps'][3]['with']
+        self.assertEqual(artifact['path'], pr_analyze['output'])
+        self.assertEqual(artifact['if-no-files-found'], 'error')
 
     def test_integrity_checks_that_code_scanning_covers_the_default_branch(self):
         name, job_id = REQUIRED_JOB
@@ -211,6 +231,33 @@ class WorkflowControlTests(unittest.TestCase):
         self.assertGreater(jobs, 0)
         self.assertEqual(len(versions), 1, f'one Node.js version everywhere, found {versions}')
 
+    def test_toolchain_versions_are_exact_and_shared(self):
+        # Floating versions let a new patch release change CI without a commit.
+        exact = re.compile(r'^\d+\.\d+\.\d+$')
+        minimum_job = ('repository-integrity.yml', 'minimum-python')
+        minimum = re.search(r'^python_version = "(\d+\.\d+)"$',
+                            (ROOT / 'pyproject.toml').read_text(encoding='utf-8'), re.M).group(1)
+        python, node = set(), set()
+        for name, document in workflows().items():
+            for job_id, job in document['jobs'].items():
+                for step in job.get('steps', []):
+                    uses, settings = str(step.get('uses', '')), step.get('with') or {}
+                    with self.subTest(workflow=name, job=job_id, uses=uses):
+                        if uses.startswith('actions/setup-python@'):
+                            version = str(settings['python-version'])
+                            self.assertRegex(version, exact)
+                            if (name, job_id) == minimum_job:
+                                self.assertTrue(version.startswith(minimum + '.'),
+                                                f'the minimum-version job runs {minimum}.x')
+                            else:
+                                python.add(version)
+                        if uses.startswith('actions/setup-node@'):
+                            self.assertRegex(str(settings['node-version']), exact)
+                            self.assertIs(settings.get('package-manager-cache'), False)
+                            node.add(str(settings['node-version']))
+        self.assertEqual(len(python), 1, f'one Python version outside the minimum job, found {python}')
+        self.assertEqual(len(node), 1, f'one Node.js version everywhere, found {node}')
+
     def test_dependabot_covers_each_pinned_dependency_once(self):
         document = yaml.safe_load((ROOT / '.github/dependabot.yml').read_text(encoding='utf-8'))
         self.assertEqual(document['version'], 2)
@@ -221,6 +268,26 @@ class WorkflowControlTests(unittest.TestCase):
             with self.subTest(ecosystem=update['package-ecosystem']):
                 self.assertNotIn('milestone', update)
                 self.assertEqual([label for label in update['labels'] if label in {'P1', 'P2', 'P3'}], ['P3'])
+                # One weekly pull request per ecosystem, at a stated local time.
+                schedule = update['schedule']
+                self.assertEqual(schedule['interval'], 'weekly')
+                self.assertTrue({'day', 'time', 'timezone'} <= set(schedule), schedule)
+                self.assertIsInstance(update.get('open-pull-requests-limit'), int)
+                self.assertTrue(update.get('commit-message', {}).get('prefix'))
+                # A catch-all group keeps related pins, such as CodeQL's init
+                # and analyze steps, in a single pull request.
+                self.assertTrue(any('*' in group.get('patterns', [])
+                                    for group in (update.get('groups') or {}).values()),
+                                'needs a group with pattern "*"')
+
+    def test_codeql_action_steps_share_one_pin(self):
+        pins = {step['uses'].split('@', 1)[1]
+                for document in workflows().values()
+                for job in document['jobs'].values()
+                for step in job.get('steps', [])
+                if str(step.get('uses', '')).startswith('github/codeql-action/')}
+        self.assertTrue(pins, 'no github/codeql-action steps found')
+        self.assertEqual(len(pins), 1, f'CodeQL action steps use different pins: {pins}')
 
 
 def milestone_script():
