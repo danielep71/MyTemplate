@@ -138,6 +138,7 @@ inherited policies may impose additional restrictions.
 | `.gitattributes`, `.gitignore`, `.editorconfig` | **Keep** | Line-ending, binary-file, ignore and editor rules for workbooks, exported VBA source and regulatory source copies. Adjust them only with a layout change that needs it. |
 | `.github/labels.json`, `.github/scripts/`, `.github/ISSUE_TEMPLATE/`, the label, triage and milestone workflows, `tools/check_issues.py` | **Keep** | Ongoing label and issue automation; see *Initialize issue labels* above. |
 | `AGENTS.md` | **Adapt** | Delete the template-only section first; keep the remaining instructions that still apply to the project. |
+| `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` | **Keep and adapt** | The contribution entry point and the Contributor Covenant 2.1 by reference, both shown in GitHub's community profile. Adapt the checks and reporting contact to the project. |
 | `SECURITY.md` | **Keep and adapt** | Names the private reporting channel and response targets. Adjust supported versions and scope to the project. |
 | `README.md` | **Adapt** | Replace the MyTemplate title and introduction with the project's purpose, installation and usage. Keep or replace setup links deliberately. |
 | `LICENSE` | **Keep or replace** | MPL-2.0 by default. The integrity workflow requires a non-empty `LICENSE`. |
