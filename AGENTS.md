@@ -20,7 +20,7 @@ Use descriptive prefixes such as `docs/`, `fix/`, `feat/`, or `chore/`. Do not u
 
 ## Commit authorship
 
-Author every commit as me, not under an assistant's identity. Before committing, set the repository's Git `user.name` and `user.email` to the name and GitHub noreply address (`<id>+<login>@users.noreply.github.com`) that my own commits in this repository use. Keep any trailer that credits an assistant as co-author. Never rewrite existing history to change authors.
+Author every commit as me, not under an assistant's identity. Before committing, set the repository's Git `user.name` and `user.email` to the name and GitHub noreply address (`<id>+<login>@users.noreply.github.com`) that my own commits in this repository use. Do not add a `Co-Authored-By` trailer that credits an assistant. Never rewrite existing history to change authors.
 
 ## Audience separation
 
