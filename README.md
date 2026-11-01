@@ -55,7 +55,7 @@ The [settings reference](docs/repo_governance/SETTINGS.md) and its
 
 ## 🧭 Repository governance
 
-See the [governance index](docs/repo_governance/README.md) for repository settings, issue labels, automation, and setup guidance.
+See the [governance index](docs/repo_governance/README.md) for repository settings, issue labels, automation, and setup guidance. To take part, read the [contributing guide](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## ⚖️ License
 
