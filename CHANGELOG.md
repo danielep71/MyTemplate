@@ -169,6 +169,11 @@ Use only the categories an entry needs.
   `tools/check_excel_run.py` measures a recorded holdout as a regression and
   records nothing. The template ships an empty record: its illustrative
   `ACC-01` stays draft, so its holdout stays sealed (#505).
+- The holdout exposure record is not a run input of
+  `tools/check_excel_run.py --equivalent-to` or `--carried-to`: the
+  accuracy measurement reads it from the commit the run certifies, so the
+  run that exposed a holdout also certifies the commit that records it,
+  when every other run input is identical (#526).
 
 ### Changed
 

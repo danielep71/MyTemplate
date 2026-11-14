@@ -491,7 +491,11 @@ when it is missing, and nothing ever resets it.
   does, holdout included, and prints a `Recorded:` line. Commit the record:
   it is part of what [validates](VALIDATION_PLAN.md#what-an-accuracy-contract-proves)
   the contract. The exposure is recorded even when the holdout then fails:
-  its errors were seen.
+  its errors were seen. The record is not a run input of `tools/check_excel_run.py`
+  ([a run for another commit](../../INSTALLATION.md#a-run-for-another-commit)):
+  the exposure run certifies the commit that records it through
+  `--equivalent-to`, reading that commit's record, when nothing else
+  changed.
 - **Refusals.** `--record-holdout` writes and measures nothing, and ends
   `accuracy: REFUSED`, for a draft contract, a contract already exposed under
   its decision (a second first exposure), a missing, malformed or
