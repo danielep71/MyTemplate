@@ -214,9 +214,10 @@ python tools/check_accuracy.py --results test-results/excel-run/results.json --c
 ```
 
 Commit `tests/accuracy/holdout_exposures.json` through a task pull request,
-and start again at step 2. The record is a run input, so the new candidate
-needs its own run, which then measures the holdout as a regression and
-records nothing.
+and start again at step 2. The record is not a run input, so the exposure
+run certifies the new candidate through `--equivalent-to` when nothing else
+changed; the check then reads the candidate's record and measures the
+holdout as a regression, recording nothing.
 
 A run made on an earlier commit certifies the candidate only when every run
 input of the candidate has the same Git blob as at the run's commit, for

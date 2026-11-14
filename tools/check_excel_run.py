@@ -54,8 +54,9 @@ holds it, and docs/methodology/TEST_HARNESS.md describes them:
   one file only, cover every output of the contracts' cases, lie within each
   output's tolerance and within each contract's threshold. A contract's
   target is only reported: its Accuracy line says when it was missed. A
-  holdout is measured only once its first exposure is in the commit's
-  tests/accuracy/holdout_exposures.json: a draft contract's holdout is
+  holdout is measured only once its first exposure is in
+  tests/accuracy/holdout_exposures.json at the commit certified (the
+  --equivalent-to or --carried-to commit, else --commit): a draft contract's holdout is
   sealed, and a frozen contract's with no exposure under its decision is
   sealed and fails the run (tools/check_accuracy.py --record-holdout records
   it). This measurement of a recorded holdout is a regression and records
@@ -102,7 +103,10 @@ decide what a build writes, what Excel runs and what this check reads:
   and of the layout template;
 - every file the accuracy check reads (CASE_PATHS): the methodology guides,
   the fixtures, which the suites also read, the expected results and the
-  accuracy contracts;
+  accuracy contracts, but not the holdout exposure record: it states which
+  exposures happened, each bound by its hashes to run inputs, and the
+  accuracy measurement reads it from the commit to certify, so the run that
+  exposed a holdout also certifies the commit that records the exposure;
 - every .gitattributes file of the tree, at the root or in any directory,
   since each one can change the bytes Git checks these files out with;
 - tools/devbuild/workbook.json itself, the layout template, the evidence
@@ -216,6 +220,9 @@ REBUILT_CONFIGURATION = "development"
 # What tools/check_accuracy.py reads of a commit to measure its contracts.
 CASE_PATHS = ("docs/methodology", "tests/fixtures", "tests/expected",
               check_accuracy.REGISTRY.parent.as_posix())
+# The holdout exposure record, under CASE_PATHS but not a run input: the
+# accuracy measurement reads it from the commit being certified.
+EXPOSURE_RECORD = check_accuracy.EXPOSURES.as_posix()
 # The modules of tools/devbuild/ whose code decides the bytes of a build:
 # build_workbook.py and what it loads from its own directory
 # (tests/test_check_excel_run.py keeps the two equal).
@@ -1178,16 +1185,22 @@ def workbook_findings(root: Path, commit: str, workbook: Path, digest: str,
     return findings
 
 
-def copy_cases(root: Path, commit: str, target: Path) -> None:
-    """The commit's files under CASE_PATHS, written below ``target``."""
+def copy_cases(root: Path, commit: str, target: Path, record_commit: str | None = None) -> None:
+    """The commit's files under CASE_PATHS, written below ``target``, with the holdout
+    exposure record of ``record_commit``, the commit certified, when it is another."""
+    record_commit = record_commit or commit
     listed = git(root, "ls-tree", "-r", "-z", "--name-only", commit, "--", *CASE_PATHS)
-    for name in filter(None, listed.decode("utf-8").split("\0")):
+    record = git(root, "ls-tree", "-z", "--name-only", record_commit, "--", EXPOSURE_RECORD)
+    files = [(commit, name) for name in filter(None, listed.decode("utf-8").split("\0"))
+             if name != EXPOSURE_RECORD]
+    files += [(record_commit, name) for name in filter(None, record.decode("utf-8").split("\0"))]
+    for source, name in files:
         path = PurePosixPath(name)
         if path.is_absolute() or ".." in path.parts:
             continue
         destination = target.joinpath(*path.parts)
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(git(root, "show", f"{commit}:{name}"))
+        destination.write_bytes(git(root, "show", f"{source}:{name}"))
 
 
 def results_files(policy: Policy) -> list[str]:
@@ -1212,8 +1225,9 @@ def check_overridden_results(commit: str, folder: Path, evidence: Evidence,
 
 
 def check_results(root: Path, commit: str, folder: Path, evidence: Evidence,
-                  policy: Policy) -> None:
-    """Measure the commit's accuracy contracts on the run's results files together."""
+                  policy: Policy, certified: str | None = None) -> None:
+    """Measure the commit's accuracy contracts on the run's results files together,
+    with the holdout exposure record of ``certified``, the commit the run certifies."""
     registry = check_accuracy.REGISTRY.as_posix()
     try:
         git(root, "cat-file", "-e", f"{commit}:{registry}")
@@ -1228,7 +1242,7 @@ def check_results(root: Path, commit: str, folder: Path, evidence: Evidence,
         return
     with tempfile.TemporaryDirectory(prefix="excel-run-cases-") as temporary:
         cases = Path(temporary)
-        copy_cases(root, commit, cases)
+        copy_cases(root, commit, cases, certified)
         found, _, lines = check_accuracy.check(cases, [folder / name for name in names],
                                                commit, widening=False)
     evidence.accuracy += lines
@@ -1295,12 +1309,15 @@ def configured_directories(root: Path, commit: str) -> set[str]:
 
 
 def run_input_paths(directories: set[str], paths: set[str]) -> set[str]:
-    """Those of ``paths`` that are run inputs, given the configuration directories."""
+    """Those of ``paths`` that are run inputs, given the configuration directories.
+    The holdout exposure record is not one: it states which exposures happened,
+    each bound by its hashes to run inputs, and changes nothing a run does."""
     homes = {*directories, *CASE_PATHS, build_workbook.DOCUMENT_HOME}
     return {path for path in paths
-            if path in RUN_INPUT_FILES or PurePosixPath(path).name == ATTRIBUTES
-            or path.lower().endswith(VBA_SUFFIXES + RESOURCE_SUFFIXES)
-            or any(path.startswith(f"{home}/") for home in homes)}
+            if path != EXPOSURE_RECORD
+            and (path in RUN_INPUT_FILES or PurePosixPath(path).name == ATTRIBUTES
+                 or path.lower().endswith(VBA_SUFFIXES + RESOURCE_SUFFIXES)
+                 or any(path.startswith(f"{home}/") for home in homes))}
 
 
 def carry_component(root: Path, commit: str, target: str, path: str,
@@ -1410,7 +1427,7 @@ def check(root: Path, commit: str, folder: Path, workbook: Path | None = None,
             check_certification(folder, failed, evidence, name, tuple(logs), certification)
     check_logs(folder, runs, evidence)
     check_host(folder, evidence, policy, rebuilt)
-    check_results(root, commit, folder, evidence, policy)
+    check_results(root, commit, folder, evidence, policy, equivalent_to or carried_to)
     check_overridden_results(commit, folder, evidence, policy)
     if not rebuilt:
         check_binding(root, commit, folder, workbook, evidence, policy)
