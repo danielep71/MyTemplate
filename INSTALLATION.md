@@ -522,7 +522,10 @@ removed. The run inputs are:
 - every file in a directory of any configuration of
   `tools/devbuild/workbook.json`, at either commit, and in `src/workbook/`;
 - every file in `docs/methodology/`, `tests/fixtures/`, `tests/expected/` and
-  `tests/accuracy/`, which the suites or the accuracy check read;
+  `tests/accuracy/`, which the suites or the accuracy check read, except the
+  holdout exposure record `tests/accuracy/holdout_exposures.json`: it states
+  which exposures happened, each bound by its hashes to run inputs, and the
+  accuracy check reads it from the commit to certify;
 - every `.gitattributes` file, at the root or in any directory, because each
   one can change the bytes Git checks these files out with;
 - `tools/devbuild/workbook.json`, `src/workbook/Template.xlsx`,

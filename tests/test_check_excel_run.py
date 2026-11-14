@@ -847,10 +847,12 @@ class EquivalenceTest(unittest.TestCase):
             ".github/workflows/ci.yml": b"on: push\n"})
         code, text = self.run_main("--equivalent-to", target)
         self.assertEqual(code, 0, text)
-        # Every file of the fixture commit is a run input; the two added are not.
-        tracked = subprocess.run(["git", "-C", str(self.root), "ls-tree", "-r", "--name-only",
-                                  self.built], capture_output=True, check=True,
-                                 text=True).stdout.split()
+        # Every file of the fixture commit but the exposure record is a run input;
+        # the two added are not.
+        tracked = [name for name in subprocess.run(
+            ["git", "-C", str(self.root), "ls-tree", "-r", "--name-only", self.built],
+            capture_output=True, check=True, text=True).stdout.split()
+            if name != check_excel_run.EXPOSURE_RECORD]
         self.assertIn(f"Candidate commit: {target}", text)
         self.assertIn(f"Run commit: {self.built} (the workbook was built from it)", text)
         self.assertIn(f"Equivalent: {target} ({len(tracked)} run inputs identical to "
@@ -999,9 +1001,10 @@ class CarriedTest(unittest.TestCase):
         self.assertEqual(code, 0, text)
         changed = sorted([POLICY.harness, "src/classes/CFixture.cls",
                           "src/forms/frmFixture.frm"])
-        tracked = subprocess.run(["git", "-C", str(self.root), "ls-tree", "-r", "--name-only",
-                                  self.built], capture_output=True, check=True,
-                                 text=True).stdout.split()
+        tracked = [name for name in subprocess.run(
+            ["git", "-C", str(self.root), "ls-tree", "-r", "--name-only", self.built],
+            capture_output=True, check=True, text=True).stdout.split()
+            if name != check_excel_run.EXPOSURE_RECORD]
         self.assertIn(f"Candidate commit: {target}", text)
         self.assertIn(f"Run commit: {self.built} (the workbook was built from it)", text)
         self.assertIn(f"Carried from {self.built[:12]}: {', '.join(changed)} differ only in "
@@ -1332,6 +1335,40 @@ class HoldoutExposureTest(unittest.TestCase):
                                             "threshold 1e-06, no target, exposures 1")
         self.assertEqual((after, status), (before, ""))
         self.assertEqual([item["commit"] for item in json.loads(after)["exposures"]], [first])
+
+    def test_the_record_is_not_a_run_input(self) -> None:
+        paths = {check_excel_run.EXPOSURE_RECORD, check_accuracy.REGISTRY.as_posix(),
+                 "tests/accuracy/design.md", "tests/expected/case.json"}
+        self.assertEqual(check_excel_run.run_input_paths(set(), paths),
+                         paths - {check_excel_run.EXPOSURE_RECORD})
+
+    def test_the_exposure_run_certifies_the_commit_that_records_it(self) -> None:
+        root, first = make_repository(extra=frozen_files())
+        try:
+            with evidence(None, root, first) as folder:
+                check_accuracy.record_holdout(root, ["ACC-01"], [folder / POLICY.results],
+                                              first)
+                second = commit_change(root, "HEAD", {})
+                registry = (root / check_accuracy.REGISTRY).read_bytes()
+                # The record commit plus any other change of a run input.
+                changed = commit_change(root, second, {
+                    check_accuracy.REGISTRY.as_posix(): registry + b"\n"})
+                equivalent = check_excel_run.check(root, first, folder, equivalent_to=second)
+                carried = check_excel_run.check(root, first, folder, carried_to=second)
+                plain = check_excel_run.check(root, first, folder)
+                differs = check_excel_run.check(root, first, folder, equivalent_to=changed)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+        measured = ("ACC-01 holdout: worst absolute error 0.0, threshold 1e-06, no target, "
+                    "exposures 1")
+        for result in (equivalent, carried):
+            self.assertEqual(result.findings, [])
+            self.assertEqual(result.accuracy[1], measured)
+        # Without another commit to certify, the run's own record is read: still unrecorded.
+        self.assertEqual(len(plain.findings), 1, plain.findings)
+        self.assertIn("ACC-01: its holdout has no exposure recorded", plain.findings[0])
+        self.assertTrue(any(f"run input {check_accuracy.REGISTRY.as_posix()}: differs between"
+                            in item for item in differs.findings), differs.findings)
 
 
 @unittest.skipUnless(COMMIT, "needs Git and the modules of tests/modules/")
